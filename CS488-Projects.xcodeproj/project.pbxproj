@@ -395,9 +395,7 @@
 		0C7DDFE41BBAFDB400D643EF /* FragmentShader.fs */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = FragmentShader.fs; sourceTree = "<group>"; };
 		0C7DDFE51BBAFDB400D643EF /* VertexShader.vs */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = VertexShader.vs; sourceTree = "<group>"; };
 		0C7DDFE71BBAFDB400D643EF /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
-		0C7DDFE81BBAFDB400D643EF /* imgui.ini */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = imgui.ini; sourceTree = "<group>"; };
 		0C7DDFE91BBAFDB400D643EF /* Main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Main.cpp; sourceTree = "<group>"; };
-		0C7DDFEA1BBAFDB400D643EF /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		0C7DDFEB1BBAFDB400D643EF /* premake4.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = premake4.lua; sourceTree = "<group>"; };
 		0C850E171BADD41400D691DD /* Instanced_Example */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Instanced_Example; sourceTree = BUILT_PRODUCTS_DIR; };
 		0C850E211BADD7FD00D691DD /* FragmentShader.fs */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = FragmentShader.fs; sourceTree = "<group>"; };
@@ -1037,9 +1035,7 @@
 				0C7DDFE21BBAFDB400D643EF /* A2.hpp */,
 				0C7DDFE31BBAFDB400D643EF /* Assets */,
 				0C7DDFE61BBAFDB400D643EF /* build */,
-				0C7DDFE81BBAFDB400D643EF /* imgui.ini */,
 				0C7DDFE91BBAFDB400D643EF /* Main.cpp */,
-				0C7DDFEA1BBAFDB400D643EF /* Makefile */,
 				0C7DDFEB1BBAFDB400D643EF /* premake4.lua */,
 			);
 			path = A2;

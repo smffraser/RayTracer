@@ -59,7 +59,81 @@ protected:
 			const glm::vec2 & v0,
 			const glm::vec2 & v1
 	);
-
+    
+    // Matrix Manipulation Functions
+    glm::mat4 translate(glm::vec3 const& v);
+    glm::mat4 scale(glm::vec3 const& s);
+    glm::mat4 rotate_z(float r);
+    glm::mat4 rotate_x(float r);
+    glm::mat4 rotate_y(float r);
+    glm::mat4 perspective(double a, double aspect, double far, double near);
+    
+    enum States {
+        O_ROTATE,
+        N_TRANSLATE,
+        P_PERSPECTIVE,
+        R_ROTATE,
+        S_SCALE,
+        T_TRANSLATE,
+        V_VIEW
+    };
+    
+    int current_state;
+    bool mouseLeftButtonActive;
+    bool mouseMiddleButtonActive;
+    bool mouseRightButtonActive;
+    double prev_x;
+    double prev_y;
+    float current_model_rotation[3] = {0.0f,0.0f,0.0f};
+    float current_model_translation[3] = {0.0f,0.0f,0.0f};
+    float current_model_scale[3] = {1.0f,1.0f,1.0f};
+    /*
+    float current_view_rotation[3];
+    glm::vec3 current_view_translation;
+    float current_fov_a;
+    float current_near;
+    float current_far;
+    float current_aspect;
+    
+    glm::vec3 current_model_translation;
+    float current_model_scale[3];
+     */
+    
+    
+    glm::mat4 projection_mat;
+    glm::mat4 view_mat;
+    glm::mat4 model_mat;
+    
+    glm::vec3 cube[24] = {
+        glm::vec3(1.0, 1.0, 1.0), glm::vec3(-1.0, 1.0, 1.0), // Cube Front
+        glm::vec3(-1.0, 1.0, 1.0), glm::vec3(-1.0, -1.0, 1.0),
+        glm::vec3(-1.0, -1.0, 1.0), glm::vec3(1.0, -1.0, 1.0),
+        glm::vec3(1.0, -1.0, 1.0), glm::vec3(1.0, 1.0, 1.0),
+        
+        glm::vec3(1.0, 1.0, -1.0), glm::vec3(-1.0, 1.0, -1.0), // Cube Back
+        glm::vec3(-1.0, 1.0, -1.0), glm::vec3(-1.0, -1.0, -1.0),
+        glm::vec3(-1.0, -1.0, -1.0), glm::vec3(1.0, -1.0, -1.0),
+        glm::vec3(1.0, -1.0, -1.0), glm::vec3(1.0, 1.0, -1.0),
+        
+        glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, -1.0), // Cube Sides
+        glm::vec3(1.0, -1.0, 1.0), glm::vec3(1.0, -1.0, -1.0),
+        glm::vec3(-1.0, 1.0, 1.0), glm::vec3(-1.0, 1.0, -1.0),
+        glm::vec3(-1.0, -1.0, 1.0), glm::vec3(-1.0, -1.0, -1.0)
+    };
+    glm::vec3 gnomon_X[2] = {
+        glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, 0.0, 0.0)
+    };
+    glm::vec3 gnomon_Y[2] = {
+        glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 0.0)
+    };
+    glm::vec3 gnomon_Z[2] = {
+        glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, 0.0)
+    };
+    
+    void draw_item(glm::vec3 *points, int num_points, glm::mat4 transforms, glm::vec3 colours);
+    void reset_view();
+    
+    
 	ShaderProgram m_shader;
 
 	GLuint m_vao;            // Vertex Array Object
