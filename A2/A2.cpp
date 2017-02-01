@@ -718,15 +718,15 @@ bool A2::mouseMoveEvent (
                 
                 if (mouseRightButtonActive) {
                     // Rotate cube on z axis
-                    current_view_rotation[2] += - diff_x / 100;
+                    current_view_rotation[2] += - diff_x / 360;
                 }
                 if (mouseMiddleButtonActive) {
                     // Rotate cube on y axis
-                    current_view_rotation[1] += - diff_x / 100;
+                    current_view_rotation[1] += - diff_x / 360;
                 }
                 if (mouseLeftButtonActive){
                     // Rotate cube on x axis
-                    current_view_rotation[0] += - diff_x / 100;
+                    current_view_rotation[0] += - diff_x / 360;
                     
                 }
                 
