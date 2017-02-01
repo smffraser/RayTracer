@@ -68,6 +68,7 @@ protected:
     glm::mat4 rotate_y(float r);
     glm::mat4 perspective(double a, double aspect, double far, double near);
     
+    // Manipulation Fields
     enum States {
         O_ROTATE,
         N_TRANSLATE,
@@ -77,33 +78,37 @@ protected:
         T_TRANSLATE,
         V_VIEW
     };
-    
     int current_state;
+    
+    // Mouse Fields
+    
     bool mouseLeftButtonActive;
     bool mouseMiddleButtonActive;
     bool mouseRightButtonActive;
     double prev_x;
     double prev_y;
+    
+    // Current Model/View/Perspective Fields
     float current_model_rotation[3] = {0.0f,0.0f,0.0f};
     float current_model_translation[3] = {0.0f,0.0f,0.0f};
     float current_model_scale[3] = {1.0f,1.0f,1.0f};
-    /*
-    float current_view_rotation[3];
-    glm::vec3 current_view_translation;
+    float current_view_rotation[3] = {0.0f,0.0f,0.0f};
+    float current_view_translation[3] = {0.0f,0.0f,0.0f};
+    float current_perspective[3] = {0.0f,0.0f,0.0f};
     float current_fov_a;
     float current_near;
     float current_far;
     float current_aspect;
     
-    glm::vec3 current_model_translation;
-    float current_model_scale[3];
-     */
+    // Current Viewport Fields
+    float current_viewport[4] = {0.0f,0.0f,0.0f,0.0f};
     
-    
+    // Transformation Matrices
     glm::mat4 projection_mat;
     glm::mat4 view_mat;
     glm::mat4 model_mat;
     
+    // Default Vertices for Cube & Gnomons
     glm::vec3 cube[24] = {
         glm::vec3(1.0, 1.0, 1.0), glm::vec3(-1.0, 1.0, 1.0), // Cube Front
         glm::vec3(-1.0, 1.0, 1.0), glm::vec3(-1.0, -1.0, 1.0),
@@ -130,10 +135,14 @@ protected:
         glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, 0.0)
     };
     
+    // Additional Functions for Transforming Points
     void draw_item(glm::vec3 *points, int num_points, glm::mat4 transforms, glm::vec3 colours);
     void reset_view();
+    bool clip_line(glm::vec4 &p1, glm::vec4 &p2);
+    void map_to_viewport(glm::vec2& p);
     
     
+    // Other fields
 	ShaderProgram m_shader;
 
 	GLuint m_vao;            // Vertex Array Object

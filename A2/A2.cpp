@@ -27,15 +27,9 @@ VertexData::VertexData()
 A2::A2()
 	: m_currentLineColour(vec3(0.0f))
     , current_state(O_ROTATE)
-    /*, current_view_rotation{0.0f,0.0f,0.0f}
-    , current_view_translation(vec3(0,0,0))
-    , current_fov_a(0.0f)
-    , current_near(0.0f)
-    , current_far(0.0f)
-    , current_aspect(1.0f)
-    , current_model_rotation{0.0f,0.0f,0.0f}
-    , current_model_translation(vec3(0,0,0))
-    , current_model_scale{0.0f,0.0f,0.0f}*/
+    , mouseLeftButtonActive(false)
+    , mouseMiddleButtonActive(false)
+    , mouseRightButtonActive(false)
 {
 
 }
@@ -166,7 +160,7 @@ void A2::mapVboDataToVertexAttributeLocation()
 //---------------------------------------------------------------------------------------
 void A2::initLineData()
 {
-	m_vertexData.numVertices = 4;
+	m_vertexData.numVertices = 0;
 	m_vertexData.index = 0;
 }
 
@@ -206,26 +200,177 @@ void A2::draw_item(vec3 *points, int num_points, mat4 transforms, vec3 colours)
         p2 = transforms * vec4(points[i+1], 1.0f);
         
         // Clip line (p1 <-> p2)
+        bool was_clipped = clip_line(p1, p2);
         
-        // Normalize (NDC)
-        
-        // Map to Viewport (NDC -> Screen)
-        
-        // Draw Line
-        drawLine(vec2(p1[0]/p1[3], p1[1]/p1[3]), vec2(p2[0]/p2[3], p2[1]/p2[3]));
-        
+        if (!was_clipped){
+            // Normalize (NDC)
+            vec2 p1_n = vec2(p1[0]/p1[3], p1[1]/p1[3]);
+            vec2 p2_n = vec2(p2[0]/p2[3], p2[1]/p2[3]);
+            
+            // Map to Viewport (NDC -> Screen)
+            map_to_viewport(p1_n);
+            map_to_viewport(p2_n);
+            
+            // Draw Line
+            drawLine(p1_n, p2_n);
+        }
     }
 }
+
+bool check_OR_zeros(int* code1, int* code2, int len){
+    for(int i=0; i < len; i++){
+        if (code1[i] == 1 || code2[i] == 1)
+        {
+            // OR operation will result in 1, thus not all zeros
+            return false;
+        }
+    }
+    return true;
+}
+
+bool check_AND_zeros(int* code1, int* code2, int len){
+    for(int i=0; i < len; i++){
+        if (code1[i] == 1 && code2[i] == 1)
+        {
+            // AND operation will result in 1, thus not all zeros
+            return false;
+        }
+    }
+    return true;
+}
+
+bool A2::clip_line(vec4 &p1, vec4 &p2){
+
+    
+    // Should the line p1 <-> p2 be included ?
+    
+    // Define the planes we are using to clip
+    // AKA the x,y,z values for boundry codes
+    float P1[6] = { p1[0], -p1[0],
+                    p1[1], -p1[1],
+                    p1[2], -p1[2] };
+    float P2[6] = { p2[0], -p2[0],
+                    p2[1], -p2[1],
+                    p2[2], -p2[2] };
+    
+    float p1_w = p1[3];
+    float p2_w = p2[3];
+    
+    int p1_codes[6] ;
+    int p2_codes[6] ;
+    
+    // For each plane, test to see if points are within the bounds
+    // Use boundry codes
+    for (int i = 0; i < 6; i++){
+        // check p1
+        if (p1_w + P1[i] < 0){
+            p1_codes[i] = 1;
+        } else {
+            p1_codes[i] = 0;
+        }
+        
+        // check p2
+        if (p2_w + P2[i] < 0){
+            p2_codes[i] = 1;
+        } else {
+            p2_codes[i] = 0;
+        }
+    }
+    
+    // Check if trivially accept / reject
+    if (check_OR_zeros(p1_codes, p2_codes, 6)){
+        // All zeros, which means we can trivially accept
+        return false;
+    }
+    
+    if (!check_AND_zeros(p1_codes, p2_codes, 6)){
+        // NOT all zeros, which means we can trivially reject
+        return true;
+    }
+    
+    // Now, need to go through each boundry and find where it crosses the boundry line
+    // p1 OR p2 could be the point that is outside the boundry line
+    
+    for (int i=0; i < 6; i++){
+        
+        // Check each boundry
+        // If one point is outside the boundry, we
+        // 1) need to find the intersection point
+        // 2) update the value of the outside point
+        if (p1_codes[i] == 1 || p2_codes[i] == 1){
+            
+            //cout << "Clipping p1 before: " << p1 << endl;
+            //cout << "Cliped p2 before: " << p2 << endl;
+            
+            // Intersection happens at point a = (w_1 + x_1)/((w_1 + x_1) - (w_2 + x_2))
+            float a = (p1_w + P1[i]) / ((p1_w + P1[i]) - (p2_w + P2[i]));
+            
+            // Now, find new point for either p1 or p2
+            if (p1_codes[i] == 1)
+            {
+                p1 = p1+a*(p2 - p1);
+                
+            } else {
+                p2 = p1+a*(p2 - p1);
+            }
+        }
+        
+    }
+    
+    // Only time we return true is if the entire line is outside the clip
+    // For lines crossing a boundry, we update the points such that it the line is only the clipped data.
+    return false;
+}
+
+void A2::map_to_viewport(vec2& p){
+    
+    // We need to take the coords of our two points and map them so that they will fit into our viewport window
+    // Steps:
+    // 1) Convert point x_w to a distance from the window corner
+    // 2) Scale this w distance to get a v distance (using ratio)
+    // 3) Add to the viewport corner to get x_v
+    
+    // Need:
+    // window width
+    // window height
+    // viewport width
+    // viewport height
+    
+    float w_width = m_windowWidth;
+    float w_height = m_windowHeight;
+    float v_width = current_viewport[0];
+    float v_height = current_viewport[1];
+    float v_corner_x = current_viewport[2];
+    float v_corner_y = current_viewport[3];
+    float width_ratio = v_width / w_width ;
+    float height_ratio = v_height / w_height ;
+    float v_corner_x_w = (2 * v_corner_x) / w_width - 1 ;
+    float v_corner_y_w = (2 * v_corner_y) / w_height - 1 ;
+    
+    // Step 1) Convert point x_w to a distance from the window corner
+    float x_w = p[0] + 1;
+    float y_w = p[1] + 1;
+    
+    // Step 2) Scale to get x_v
+    float x_v = x_w * width_ratio ;
+    float y_v = y_w * height_ratio ;
+    
+    // Step 3) Add to viewport corner
+    p[0] = x_v + v_corner_x_w;
+    p[1] = y_v + v_corner_y_w;
+}
+
+
 
 void A2::reset_view()
 {
     // Reset the view back to default settings
     current_state = O_ROTATE;
-    /*current_fov_a = 30.0f;
+    current_fov_a = 30.0f;
     current_near = 1.0f;
-    current_far = 10.f;
+    current_far = 20.0f;
     current_aspect = 1.0f;
-    */
+    
     current_model_rotation[0] = 0.0f;
     current_model_rotation[1] = 0.0f;
     current_model_rotation[2] = 0.0f;
@@ -236,22 +381,29 @@ void A2::reset_view()
     current_model_scale[1] = 1.0f;
     current_model_scale[2] = 1.0f;
     
-    // Set Model Matrix back to identity
-    model_mat = glm::mat4();
-    //model_mat = rotate_x(radians(90.0f));
-    //model_mat = glm::rotate(model_mat, radians(90.0f), vec3(1,0,0));
+    current_view_rotation[0] = 0.0f;
+    current_view_rotation[1] = 0.0f;
+    current_view_rotation[2] = 0.0f;
+    current_view_translation[0] = 0.0f;
+    current_view_translation[1] = 0.0f;
+    current_view_translation[2] = 0.0f;
     
-    // Set View Matrix to Default View Pos
-    vec3 view_pos = vec3(0.0f, 0.0f, -5.0f);
-    view_mat = glm::mat4() * translate(view_pos);
-    //view_mat = glm::translate(view_mat,vec3(0.0f, 0.0f, 5.0f));
+    current_perspective[0] = current_fov_a;
+    current_perspective[1] = current_near;
+    current_perspective[2] = current_far;
     
-    // Set Perspective Matrix to Default
-    projection_mat = perspective(30.0, 1.0, 10.0, 1.0);
-    //projection_mat = glm::perspective(30.0, 1.0, 1.0, 10.0);
-
+    // Viewport width - init 5% margin of window size on both sides
+    // Thus 90% of the window width
+    current_viewport[0] = (m_windowWidth * 0.9f) ;
+    // Viewport height - init 5% margin of window size on both side
+    // Thus 90% of the window height
+    current_viewport[1] = (m_windowHeight * 0.9f);
+    // Viewport left bottom corner x - init 5% margin from window
+    current_viewport[2] = (m_windowWidth * 0.05f);
+    // Viewport left bottom corner y - init 5% margin
+    current_viewport[3] = (m_windowHeight * 0.05f);
+    
 }
-
 
 //----------------------------------------------------------------------------------------
 /*
@@ -264,6 +416,18 @@ void A2::appLogic()
 	// Call at the beginning of frame, before drawing lines:
 	initLineData();
     
+    // Draw Viewport
+    vec3 viewport[8] = {
+        // Bottom Left Corner -> Top Left Corner
+        vec3(-1,-1,1), vec3(-1,1,1),
+        // Top Left Corner -> Top Right Corner
+        vec3(-1,1,1), vec3(1,1,1),
+        // Top Right Corner -> Bottom Right Corner
+        vec3(1,1,1), vec3(1,-1,1),
+        // Bottom Right Corner -> Bottom Left Corner
+        vec3(1,-1,1), vec3(-1,-1,1)
+    };
+    
     // Need to take cube verts in 3D and transform to 2D
     // - Morph by Model Matrix
     // - Morph by View Matrix
@@ -273,22 +437,38 @@ void A2::appLogic()
     // - normalize
     // - viewport
     
+    // Model Changes
+    
     model_mat = translate(vec3(current_model_translation[0],current_model_translation[1],current_model_translation[2])) * rotate_x(current_model_rotation[0]) * rotate_y(current_model_rotation[1]) * rotate_z(current_model_rotation[2]) * scale(vec3(current_model_scale[0],current_model_scale[1],current_model_scale[2]));
     
     mat4 gnomon_model_mat = translate(vec3(current_model_translation[0],current_model_translation[1],current_model_translation[2])) * rotate_x(current_model_rotation[0]) * rotate_y(current_model_rotation[1]) * rotate_z(current_model_rotation[2]);
     
+    // View Changes
+    
+    // Default Eye position
+    vec3 view_pos = vec3(0.0f, 0.0f, -15.0f);
+    
+    view_mat = translate(vec3(current_view_translation[0],current_view_translation[1],current_view_translation[2])) * rotate_x(current_view_rotation[0]) * rotate_y(current_view_rotation[1]) * rotate_z(current_view_rotation[2]) * translate(view_pos);
+    
+    // Projection Changes
+    projection_mat = perspective((double)current_perspective[0], (double)current_aspect, (double)current_perspective[2], (double)current_perspective[1]);
+    
     // Draw cube (white lines)
-    draw_item(cube, 24.0f, projection_mat * view_mat * model_mat, vec3(1.0f,1.0f,1.0f));
+    draw_item(cube, 24, projection_mat * view_mat * model_mat, vec3(1.0f,1.0f,1.0f));
     
     // Draw model gnomon
-    draw_item(gnomon_X, 2.0f, projection_mat * view_mat * gnomon_model_mat, vec3(1.0f,0.0f,0.0f));
-    draw_item(gnomon_Y, 2.0f, projection_mat * view_mat * gnomon_model_mat, vec3(0.0f,1.0f,0.0f));
-    draw_item(gnomon_Z, 2.0f, projection_mat * view_mat * gnomon_model_mat, vec3(0.0f,0.0f,1.0f));
+    draw_item(gnomon_X, 2, projection_mat * view_mat * gnomon_model_mat, vec3(1.0f,0.0f,0.0f));
+    draw_item(gnomon_Y, 2, projection_mat * view_mat * gnomon_model_mat, vec3(1.0f,1.0f,0.0f));
+    draw_item(gnomon_Z, 2, projection_mat * view_mat * gnomon_model_mat, vec3(0.0f,1.0f,1.0f));
     
     // Draw world gnomon
-    draw_item(gnomon_X, 2.0f, projection_mat * view_mat, vec3(1.0f,0.5f,0.5f));
-    draw_item(gnomon_Y, 2.0f, projection_mat * view_mat, vec3(0.5f,1.0f,0.5f));
-    draw_item(gnomon_Z, 2.0f, projection_mat * view_mat, vec3(0.5f,0.5f,1.0f));
+    draw_item(gnomon_X, 2, projection_mat * view_mat, vec3(1.0f,0.0f,0.5f));
+    draw_item(gnomon_Y, 2, projection_mat * view_mat, vec3(0.0f,1.0f,0.5f));
+    draw_item(gnomon_Z, 2, projection_mat * view_mat, vec3(0.5f,0.5f,1.0f));
+    
+    // Draw viewport border
+    draw_item(viewport, 8, mat4(), vec3(1.0,1.0,1.0));
+    
     
     
 }
@@ -334,6 +514,8 @@ void A2::guiLogic()
         ImGui::RadioButton("Viewport", &current_state, V_VIEW);
 
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
+        ImGui::Text("Far: %.1f ", current_perspective[2]);
+        ImGui::Text("Near: %.1f ", current_perspective[1]);
 
 	ImGui::End();
 }
@@ -494,11 +676,6 @@ mat4 A2::perspective(double a, double aspect, double far, double near)
     matrix[2] = vec4(0, 0, (-1.0f*((far + near)/(far - near))), -1.0f);
     matrix[3] = vec4(0, 0, ((-2.0f*far*near)/(far - near)), 0);
     
-    
-    //matrix[0] = vec4((cot(rad_a/2.0f)/aspect), 0, 0, 0);
-    //matrix[1] = vec4(0, cot(rad_a/2.0f), 0, 0);
-    //matrix[2] = vec4(0, 0, (near+far)/near, -far);
-    //matrix[3] = vec4(0, 0, 1/near, 0);
     return matrix;
 }
 
@@ -512,8 +689,11 @@ bool A2::cursorEnterWindowEvent (
 		int entered
 ) {
 	bool eventHandled(false);
-
-	// Fill in with event handling code...
+    
+    // If the mouse leaves the window while dragging a viewport, clamp at the
+    if (entered == 0 && current_state == V_VIEW){
+        mouseLeftButtonActive = false;
+    }
 
 	return eventHandled;
 }
@@ -531,6 +711,89 @@ bool A2::mouseMoveEvent (
     if (!ImGui::IsMouseHoveringAnyWindow()) {
     
         switch (current_state) {
+                
+            case O_ROTATE:
+            {
+                float diff_x = prev_x - xPos;
+                
+                if (mouseRightButtonActive) {
+                    // Rotate cube on z axis
+                    current_view_rotation[2] += - diff_x / 100;
+                }
+                if (mouseMiddleButtonActive) {
+                    // Rotate cube on y axis
+                    current_view_rotation[1] += - diff_x / 100;
+                }
+                if (mouseLeftButtonActive){
+                    // Rotate cube on x axis
+                    current_view_rotation[0] += - diff_x / 100;
+                    
+                }
+                
+                if (mouseLeftButtonActive || mouseMiddleButtonActive || mouseRightButtonActive){
+                    //Update the previous x position to the current x value
+                    prev_x = xPos;
+                }
+                
+                break;
+            }
+                
+            case N_TRANSLATE:
+            {
+                float diff_x = prev_x - xPos;
+                
+                if (mouseRightButtonActive) {
+                    // Translate cube on z axis
+                    current_view_translation[2] += - diff_x / 100;
+                }
+                if (mouseMiddleButtonActive) {
+                    // Translate cube on y axis
+                    current_view_translation[1] += - diff_x / 100;
+                }
+                if (mouseLeftButtonActive){
+                    // Translate cube on x axis
+                    current_view_translation[0] += - diff_x / 100;
+                    
+                }
+                
+                if (mouseLeftButtonActive || mouseMiddleButtonActive || mouseRightButtonActive){
+                    //Update the previous x position to the current x value
+                    prev_x = xPos;
+                }
+                
+            }
+                
+            case P_PERSPECTIVE:
+            {
+                float diff_x = prev_x - xPos;
+                
+                if (mouseRightButtonActive) {
+                    // Change far value
+                    current_perspective[2] += - diff_x / 100;
+                }
+                if (mouseMiddleButtonActive) {
+                    // Change near value
+                    current_perspective[1] += - diff_x / 100;
+                }
+                if (mouseLeftButtonActive){
+                    
+                    
+                    // Change FOV angle value (5 <= a <= 160)
+                    
+                    if ((current_perspective[0] + -diff_x/ 10 >= 5) &&
+                        (current_perspective[0] + -diff_x/ 10 <= 160))
+                    {
+                        current_perspective[0] += -diff_x / 10;
+                    }
+                    
+                }
+                
+                if (mouseLeftButtonActive || mouseMiddleButtonActive || mouseRightButtonActive){
+                    //Update the previous x position to the current x value
+                    prev_x = xPos;
+                }
+                
+            }
             
             case R_ROTATE:
             {
@@ -613,6 +876,52 @@ bool A2::mouseMoveEvent (
                 
                 break;
             }
+                
+            case V_VIEW:
+            {
+                if (mouseLeftButtonActive){
+                    
+                    // Get the difference in the x & y coords
+                    float diff_x = xPos - prev_x;
+                    float diff_y = (m_windowHeight - yPos) - prev_y;
+                    
+                    // If the click was the bottom left viewport corner, then the diff in x and y will both be positive
+                    if (diff_x >= 0 && diff_y >= 0){
+                        current_viewport[0] += diff_x;
+                        current_viewport[1] += diff_y;
+                    } else if (diff_x >= 0 && diff_y < 0){
+                        // Click was the top left corner dragging down - diff x pos and diff y neg
+                        // So the x value of the origin stays the same
+                        // But the y value has to change
+                        // Both height and width are still changing
+                        current_viewport[0] += diff_x;
+                        current_viewport[1] += (-1)*diff_y;
+                        current_viewport[3] = m_windowHeight - yPos;
+                    } else if (diff_x < 0 && diff_y >= 0){
+                        // Click was the bottom right corner - diff x neg and diff y pos
+                        // x value or the origin changes while y stays the same
+                        // height and width still increase
+                        current_viewport[0] += (-1)*diff_x;
+                        current_viewport[1] += diff_y;
+                        current_viewport[2] = xPos;
+                    } else {
+                        // Click was the top right corner - both diffs are negative
+                        // everything changes
+                        current_viewport[0] += (-1)*diff_x;
+                        current_viewport[1] += (-1)*diff_y;
+                        current_viewport[2] = xPos;
+                        current_viewport[3] = m_windowHeight - yPos;
+                    }
+                    
+                    prev_x = xPos;
+                    prev_y = m_windowHeight - yPos;
+                    
+                    
+                }
+                break;
+            }
+                
+            
             default:
                 break;
         }
@@ -642,6 +951,17 @@ bool A2::mouseButtonInputEvent (
                 mouseLeftButtonActive = true;
                 // Get the x and y value and update previous x/y variables
                 glfwGetCursorPos(m_window, &prev_x, &prev_y);
+                
+                if (current_state == V_VIEW){
+                    
+                    prev_y = m_windowHeight - prev_y;
+                    current_viewport[2] = prev_x;
+                    current_viewport[3] = prev_y;
+                    current_viewport[0] = 0;
+                    current_viewport[1] = 0;
+                    // w, h, x, y
+                }
+            
             }
             else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
                 mouseMiddleButtonActive = true;
