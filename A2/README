@@ -1,0 +1,40 @@
+***********************
+
+Assignment 2
+CS 488
+Winter 2017
+
+Sarah Fraser
+20458408
+sm2frase@uwaterloo.ca
+
+***********************
+
+
+** COMPILATION **
+
+To compile run these commands in the provided cs488 directory:
+  cs488$ cd A2
+  cs488$ premake4 gmake
+  cs488$ make
+  cs488$ ./A2
+
+This assignment was completed on my personal computer. It will be checked on a lab computer.
+
+** MANUAL **
+
+Assumptions:
+1) It is assumed that, apart from the viewport, mouse movement off screen still "counts" when a mouse button has been clicked. For example, a rotatation will continue even if the mouse goes off the window during the dragging.
+- This assumption was made since the assignment only specifies clamping should be done for viewport and nothing else.
+
+2) It is assumed that since we want the viewport to "mess up" the picture, aspect ratio is not used in calculating the perspective. 
+- This assumption was made since the assignment asks for the viewport to show aspect ratios scewed, but in the text the matrix for perspective includes the aspect ratio.
+
+3) It is assumed that, apart from the viewport & starting state, any default values can be used. For example, the camera view can start 5 units away from the origin on the z axis.
+- This assumption was made since all default value suggestions (except viewport and starting state) were worded as suggestions.
+
+Extra Features:
+- There are no additional features at this time.
+
+Incomplete Objectives / Code Credit:
+- None 
