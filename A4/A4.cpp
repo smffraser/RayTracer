@@ -6,6 +6,8 @@
 
 #include "A4.hpp"
 
+#define SUPERSAMPLE
+
 
 struct Ray {
     glm::vec3 origin ;
@@ -306,6 +308,43 @@ void A4_Render(
                 
             }
             
+#ifdef SUPERSAMPLE
+            
+            // Super sampling - sample four corners of pixel instead of just top left corner
+            glm::vec4 pixel_tl = glm::vec4(x, y, 0.0, 1.0);
+            glm::vec4 pixel_tr = glm::vec4(x+1, y, 0.0, 1.0);
+            glm::vec4 pixel_bl = glm::vec4(x, y+1, 0.0, 1.0);
+            glm::vec4 pixel_br = glm::vec4(x+1, y+1, 0.0, 1.0);
+            
+            // Get pixels in world coords
+            glm::vec3 p_tl = glm::vec3(pixel_to_world * pixel_tl);
+            glm::vec3 p_tr = glm::vec3(pixel_to_world * pixel_tr);
+            glm::vec3 p_bl = glm::vec3(pixel_to_world * pixel_bl);
+            glm::vec3 p_br = glm::vec3(pixel_to_world * pixel_br);
+            
+            // Create four rays
+            Ray ray_tl = {eye, p_tl - eye};
+            Ray ray_tr = {eye, p_tr - eye};
+            Ray ray_bl = {eye, p_bl - eye};
+            Ray ray_br = {eye, p_br - eye};
+            
+            // Set background colour
+            glm::vec3 background_col = glm::vec3(0.0, 0.0, 0.0);
+            
+            // Get 4 colours
+            glm::vec3 colour_tl = ray_colour(ray_tl, background_col, root, ambient, lights);
+            glm::vec3 colour_tr = ray_colour(ray_tr, background_col, root, ambient, lights);
+            glm::vec3 colour_bl = ray_colour(ray_bl, background_col, root, ambient, lights);
+            glm::vec3 colour_br = ray_colour(ray_br, background_col, root, ambient, lights);
+            
+            image(x, y, 0) = (colour_tl[0] + colour_tr[0] + colour_bl[0] + colour_br[0]) / 4.0f;
+            image(x, y, 1) = (colour_tl[1] + colour_tr[1] + colour_bl[1] + colour_br[1]) / 4.0f;
+            image(x, y, 2) = (colour_tl[2] + colour_tr[2] + colour_bl[2] + colour_br[2]) / 4.0f;
+            
+            current_pixel++;
+            
+#else
+            
             // Pixel to World Coords
             glm::vec4 pixel = glm::vec4(x, y, 0.0, 1.0);
             glm::vec3 p = glm::vec3(pixel_to_world * pixel);
@@ -328,6 +367,8 @@ void A4_Render(
             image(x, y, 2) = colour[2];
             
             current_pixel++;
+            
+#endif
         }
     }
     
