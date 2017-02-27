@@ -12,6 +12,13 @@ struct Ray {
     glm::vec4 direction ;
 };
 
+glm::vec4 transNorm(glm::mat4 M, const glm::vec4 n){
+    return glm::vec4(n[0] * M[0][0] + n[1] * M[1][0] + n[2] * M[2][0],
+                     n[0] * M[0][1] + n[1] * M[1][1] + n[2] * M[2][1],
+                     n[0] * M[0][2] + n[1] * M[1][2] + n[2] * M[2][2],
+                     0.0);
+}
+
 bool find_intersection(Ray r, SceneNode* node, Intersection &inter){
     // Test if ray intersects object
     
@@ -19,8 +26,9 @@ bool find_intersection(Ray r, SceneNode* node, Intersection &inter){
     // Then check it's children
     
     // Need to transform ray to object's model coords
-    //r.origin = node->invtrans * r.origin;
-    //r.direction = node->invtrans * r.direction;
+    // Transform the ray to geonode's model coords using the inverse transform WCS -> MCS
+    r.origin = node->get_inverse() * r.origin;
+    r.direction = node->get_inverse() * r.direction;
     
     bool intersection_result = false;
     
@@ -48,6 +56,11 @@ bool find_intersection(Ray r, SceneNode* node, Intersection &inter){
             intersection_result = true;
         }
         
+    }
+    
+    if (intersection_result){
+        inter.inter_point = glm::vec3(node->get_transform() * glm::vec4(inter.inter_point, 1.0));
+        inter.inter_normal = glm::vec3(glm::normalize(transNorm(node->get_inverse(), glm::vec4(inter.inter_normal, 0.0))));
     }
 
     return intersection_result;
