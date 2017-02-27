@@ -58,14 +58,12 @@ glm::mat4 world_pixels(size_t width, size_t height, glm::vec3 lookfrom, double f
     //double h = 2.0*d*tan(fov_r / 2.0); // height of projection plane based field of view and distance to the plane
     
     // P_world = T4R3S2T1pk
-    glm::vec4 p = glm::vec4(0.0, 0.0, 0.0, 1.0);
     
     // Translate point by (-nx/2, -ny/2, d) where d = depth of the view (ie. view.length) and nx = image width and ny = image height
     glm::mat4 T1 = glm::mat4();
     T1 = glm::column(T1, 3, glm::vec4((double)width*(-1)/2.0, (double)height*(-1)/2.0, view.length(), 1.0));
     
     //std::cout << glm::to_string(T1) << std::endl;
-    //std::cout << glm::to_string(T1 * p) << std::endl;
    
     // Scale point by (-h/ny, w/nx, 1) to preserve the aspect ratio
     glm::mat4 S2 = glm::mat4();
@@ -79,7 +77,7 @@ glm::mat4 world_pixels(size_t width, size_t height, glm::vec3 lookfrom, double f
     S2 = glm::column(S2, 1, glm::vec4(0.0, ((-1.0f)*w/(double)width), 0.0, 0.0));
     S2 = glm::column(S2, 2, glm::vec4(0.0, 0.0, 1.0, 0.0));
     
-    std::cout << glm::to_string(S2 * T1 * p) << std::endl;
+    //std::cout << glm::to_string(S2 * T1 * p) << std::endl;
     
     // Rotate to superimpose WCS to VCS
     // R3 = [ ux vx wx 0 ]
@@ -114,7 +112,7 @@ glm::mat4 world_pixels(size_t width, size_t height, glm::vec3 lookfrom, double f
                              glm::vec4(w_norm, 0.0),
                              glm::vec4(0.0, 0.0, 0.0, 1.0));
     
-    std::cout << glm::to_string(R3) << std::endl;
+    //std::cout << glm::to_string(R3) << std::endl;
     
     // Translate view by T
     glm::mat4 T4 = glm::mat4(glm::vec4(1.0, 0.0, 0.0, 0.0),
@@ -283,8 +281,8 @@ void A4_Render(
             glm::vec4 p = pixel_to_world * pixel;
         
             //std::cout << view.length() << std::endl;
-            //std::cout << glm::to_string(pixel) << std::endl;
-            //std::cout << glm::to_string(p) << std::endl;
+            //std::cout << "pixel: " << glm::to_string(pixel) << std::endl;
+            //std::cout << "p: " << glm::to_string(p) << std::endl;
             
             // Create the ray with origin at the eye point
             Ray ray = {glm::vec4(eye, 1.0), p - glm::vec4(eye, 1.0)};

@@ -25,6 +25,7 @@ struct Triangle
 class Mesh : public Primitive {
 public:
   Mesh( const std::string& fname );
+  virtual bool intersect(const glm::vec4 origin, const glm::vec4 direction, Intersection &inter) const;
   
 private:
 	std::vector<glm::vec3> m_vertices;
