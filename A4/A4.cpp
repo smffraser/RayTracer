@@ -40,8 +40,9 @@ bool find_intersection(Ray r, SceneNode* node, Intersection &inter){
         if (find_intersection(r, child, child_inter)){
             // Check if the intersection point is closer than the current closest intersection (inter)
             // Note if any of the the x,y,z values of the parent intersection are infinite, then the new intersection point will be closer
+            
             if (inter.inter_point[0] == INFINITY || inter.inter_point[1] == INFINITY || inter.inter_point[2] == INFINITY ||
-                (child_inter.inter_point - glm::vec3(r.origin)).length() < (inter.inter_point - glm::vec3(r.origin)).length()){
+                (glm::length(child_inter.inter_point - glm::vec3(r.origin))) < glm::length((inter.inter_point - glm::vec3(r.origin)))){
                 inter = child_inter;
             }
             intersection_result = true;
@@ -298,4 +299,26 @@ void A4_Render(
             image(x, y, 2) = colour[2];
         }
     }
+    
+    /*
+    // Pixel to World Coords
+    glm::vec4 pixel = glm::vec4(148, 126, 0.0, 1.0);
+    glm::vec4 p = pixel_to_world * pixel;
+    
+    //std::cout << view.length() << std::endl;
+    //std::cout << "pixel: " << glm::to_string(pixel) << std::endl;
+    //std::cout << "p: " << glm::to_string(p) << std::endl;
+    
+    // Create the ray with origin at the eye point
+    Ray ray = {glm::vec4(eye, 1.0), p - glm::vec4(eye, 1.0)};
+    
+    // Background colour (for now its just white)
+    glm::vec3 background_col = glm::vec3(0.0, 0.0, 0.0);
+    
+    // Cast ray into the scene and get the colour returned
+    glm::vec3 colour = ray_colour(ray, background_col, root, ambient, lights);
+    
+    //image(x, y, 0) = colour[0];
+    //image(x, y, 1) = colour[1];
+    //image(x, y, 2) = colour[2];*/
 }
