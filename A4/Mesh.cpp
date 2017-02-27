@@ -6,6 +6,8 @@
 // #include "cs488-framework/ObjFileDecoder.hpp"
 #include "Mesh.hpp"
 
+//#define BOUNDING
+
 Mesh::Mesh( const std::string& fname )
 	: m_vertices()
 	, m_faces()
@@ -76,6 +78,16 @@ NonhierBox Mesh::getBoundingBox() const{
 
 bool Mesh::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersection &inter) const {
     
+#ifdef BOUNDING
+    
+    // Before we try to find intersections with the mesh, look at its bounding box...
+    NonhierBox bounding_box = getBoundingBox();
+    bool bounding_result = bounding_box.intersect(origin, direction, inter);
+    
+    return bounding_result;
+    
+#else
+    
     // Before we try to find intersections with the mesh, look at its bounding box...
     Intersection bound_inter ;
     NonhierBox bounding_box = getBoundingBox();
@@ -85,6 +97,8 @@ bool Mesh::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersec
     if (!bounding_result) {
         return false;
     }
+    
+#endif
     
     // Go through each face of the mesh and check if the ray intersects with that face
     //  Steps to find intersection:
