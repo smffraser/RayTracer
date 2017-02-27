@@ -10,27 +10,27 @@ Sphere::~Sphere()
 }
 
 
-bool Sphere::intersect(const glm::vec4 origin, const glm::vec4 direction) const
+bool Sphere::intersect(const glm::vec4 origin, const glm::vec4 direction, Intersection &inter) const
 {
     NonhierSphere sphere(glm::vec3(0.0, 0.0, 0.0), 1.0);
-    return sphere.intersect(origin, direction);
+    return sphere.intersect(origin, direction, inter);
 }
 
 Cube::~Cube()
 {
 }
 
-bool Cube::intersect(const glm::vec4 origin, const glm::vec4 direction) const
+bool Cube::intersect(const glm::vec4 origin, const glm::vec4 direction, Intersection &inter) const
 {
     NonhierBox box(glm::vec3(0.0, 0.0, 0.0), 1.0);
-    return box.intersect(origin, direction);
+    return box.intersect(origin, direction, inter);
 }
 
 NonhierSphere::~NonhierSphere()
 {
 }
 
-bool NonhierSphere::intersect(const glm::vec4 origin, const glm::vec4 direction) const{
+bool NonhierSphere::intersect(const glm::vec4 origin, const glm::vec4 direction, Intersection &inter) const{
     
     double roots[2];
     glm::vec3 og = glm::vec3(origin);
@@ -60,15 +60,27 @@ bool NonhierSphere::intersect(const glm::vec4 origin, const glm::vec4 direction)
     //   -> take the smaller of the roots (t) because we only want the front part where the ray hits not the back
     if (num_roots == 1){
         // Check if t > 0 (ie make sure in front of eye)
-        if (roots[0] > 0) return true;
+        if (roots[0] > 0) {
+            inter.inter_point = og + (float)roots[0]*di;
+            inter.inter_normal = glm::normalize(inter.inter_point - m_pos);
+            return true;
+        }
     } else if (num_roots == 2){
         // find the smaller of the two ts
         // check if the min is < 0
         // -> if it is and the other root is > 0 then the eye is IN the sphere
         double min = (roots[0] < roots[1] ? roots[0] : roots[1]);
         double other = (min == roots[0] ? roots[1] : roots[0]);
-        if (min > 0) return true;
-        if (min < 0 && other > 0) return true;
+        if (min > 0) {
+            inter.inter_point = og + (float)min*di;
+            inter.inter_normal = glm::normalize(inter.inter_point - m_pos);
+            return true;
+        }
+        if (min < 0 && other > 0) {
+            inter.inter_point = og + (float)other*di;
+            inter.inter_normal = glm::normalize(inter.inter_point - m_pos);
+            return true;
+        }
     }
     
     return false;
@@ -78,6 +90,6 @@ NonhierBox::~NonhierBox()
 {
 }
 
-bool NonhierBox::intersect(const glm::vec4 origin, const glm::vec4 direction) const{
+bool NonhierBox::intersect(const glm::vec4 origin, const glm::vec4 direction, Intersection &inter) const{
     return false;
 }

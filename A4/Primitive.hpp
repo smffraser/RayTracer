@@ -1,12 +1,13 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include "Helpers.hpp"
 
 class Primitive {
 public:
     virtual ~Primitive();
     
-    virtual bool intersect(const glm::vec4 origin, const glm::vec4 direction) const
+    virtual bool intersect(const glm::vec4 origin, const glm::vec4 direction, Intersection &inter) const
     {
         return false;
     }
@@ -18,7 +19,7 @@ class Sphere : public Primitive {
 public:
   virtual ~Sphere();
     
-    virtual bool intersect(const glm::vec4 origin, const glm::vec4 direction) const;
+    virtual bool intersect(const glm::vec4 origin, const glm::vec4 direction, Intersection &inter) const;
     
 };
 
@@ -26,7 +27,7 @@ class Cube : public Primitive {
 public:
   virtual ~Cube();
     
-    virtual bool intersect(const glm::vec4 origin, const glm::vec4 direction) const;
+    virtual bool intersect(const glm::vec4 origin, const glm::vec4 direction, Intersection &inter) const;
     
 };
 
@@ -35,7 +36,7 @@ public:
     NonhierSphere(const glm::vec3& pos, double radius): m_pos(pos), m_radius(radius){}
     virtual ~NonhierSphere();
     
-    virtual bool intersect(const glm::vec4 origin, const glm::vec4 direction) const;
+    virtual bool intersect(const glm::vec4 origin, const glm::vec4 direction, Intersection &inter) const;
 
 private:
   glm::vec3 m_pos;
@@ -51,7 +52,7 @@ public:
   
   virtual ~NonhierBox();
     
-    virtual bool intersect(const glm::vec4 origin, const glm::vec4 direction) const;
+    virtual bool intersect(const glm::vec4 origin, const glm::vec4 direction, Intersection &inter) const;
 
 private:
   glm::vec3 m_pos;
