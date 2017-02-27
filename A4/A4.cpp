@@ -291,9 +291,21 @@ void A4_Render(
 	}
  */
     glm::mat4 pixel_to_world = world_pixels(image.width(), image.height(), eye, fovy, view, up);
-
+    int total_pixels = image.height() * image.width();
+    int current_pixel = 1;
+    int current_percent = 0;
+    
     for (int y = 0; y < image.height(); y += 1) {
         for (int x = 0; x < image.width(); x++) {
+            
+            if (int(floorf((float)current_pixel / (float)total_pixels*100))%1 == 0){
+                if (current_percent != int(floorf((float)current_pixel / (float)total_pixels*100))){
+                    std::cout << "Progress: " << int(floorf((float)current_pixel / (float)total_pixels*100)) << "%" << std::endl;
+                    current_percent = int(floorf((float)current_pixel / (float)total_pixels*100));
+                }
+                
+            }
+            
             // Pixel to World Coords
             glm::vec4 pixel = glm::vec4(x, y, 0.0, 1.0);
             glm::vec3 p = glm::vec3(pixel_to_world * pixel);
@@ -314,6 +326,8 @@ void A4_Render(
             image(x, y, 0) = colour[0];
             image(x, y, 1) = colour[1];
             image(x, y, 2) = colour[2];
+            
+            current_pixel++;
         }
     }
     
