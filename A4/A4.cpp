@@ -62,7 +62,7 @@ glm::mat4 world_pixels(size_t width, size_t height, glm::vec3 lookfrom, double f
     
     // Translate point by (-nx/2, -ny/2, d) where d = depth of the view (ie. view.length) and nx = image width and ny = image height
     glm::mat4 T1 = glm::mat4();
-    T1 = glm::column(T1, 3, glm::vec4((double)width*(-1)/2.0, (double)height*(-1)/2.0, view.length(), 1.0));
+    T1 = glm::column(T1, 3, glm::vec4((double)width*(-1)/2.0, (double)height*(-1)/2.0, glm::length(view), 1.0));
     
     //std::cout << glm::to_string(T1) << std::endl;
    
@@ -70,7 +70,7 @@ glm::mat4 world_pixels(size_t width, size_t height, glm::vec3 lookfrom, double f
     glm::mat4 S2 = glm::mat4();
     
     // Height of the projection plane
-    double h = 2.0 * view.length() * tan(glm::radians(fov)/2.0);
+    double h = 2.0 * glm::length(view) * tan(glm::radians(fov)/2.0);
     // Width of the projection plane
     double w = ((double)width/(double)height)*h;
     
@@ -173,7 +173,7 @@ glm::vec3 determine_lighting(Ray r, Intersection &inter, Light* light, const Pho
     
     // 3) Attenuation of the sum of d and s
     // Get the attenuation factor using the light fall off field
-    double attenuation = 1.0f / (light->falloff[0] + light->falloff[1]*p_vec.length() + light->falloff[2]*(p_vec.length()*p_vec.length()));
+    double attenuation = 1.0f / (light->falloff[0] + light->falloff[1]*glm::length(p_vec) + light->falloff[2]*(glm::length(p_vec)*glm::length(p_vec)));
     if (attenuation != 1){
         std::cout << attenuation << std::endl;
     }
@@ -190,7 +190,7 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
         const PhongMaterial* material = dynamic_cast<const PhongMaterial*>(intersection.material);
         // Material does not emit light in this assignment so no ke
         glm::vec3 colour_vec = material->get_kd() * ambient;
-        glm::vec4 p = glm::vec4(intersection.inter_point, 1.0);
+        glm::vec4 p = glm::vec4(intersection.inter_point, 1.0) + (1e-2)*glm::vec4(intersection.inter_normal, 0.0);
         
         // For all the different light sources...
         for(auto light : lights)
@@ -206,7 +206,7 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
             
             // Check if the shadow ray hits another object (ie. the light is blocked)
             if(find_intersection(shadow_ray, root, shadow_inter) &&
-               (shadow_inter.inter_point - glm::vec3(shadow_ray.origin)).length() < (light->position - glm::vec3(shadow_ray.origin)).length()){
+               (glm::length(shadow_inter.inter_point - glm::vec3(shadow_ray.origin)) < glm::length(light->position - glm::vec3(shadow_ray.origin)))){
                 // Don't add the colour for this light source since it is blocked by an object in front of the light source
                 continue;
             }
