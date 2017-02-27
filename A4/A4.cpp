@@ -8,15 +8,14 @@
 
 
 struct Ray {
-    glm::vec4 origin ;
-    glm::vec4 direction ;
+    glm::vec3 origin ;
+    glm::vec3 direction ;
 };
 
-glm::vec4 transNorm(glm::mat4 M, const glm::vec4 n){
-    return glm::vec4(n[0] * M[0][0] + n[1] * M[1][0] + n[2] * M[2][0],
-                     n[0] * M[0][1] + n[1] * M[1][1] + n[2] * M[2][1],
-                     n[0] * M[0][2] + n[1] * M[1][2] + n[2] * M[2][2],
-                     0.0);
+glm::vec3 transNorm(glm::mat4 M, const glm::vec3 n){
+    return glm::vec3(n[0] * M[0][0] + n[1] * M[0][1] + n[2] * M[0][2],
+                     n[0] * M[1][0] + n[1] * M[1][1] + n[2] * M[1][2],
+                     n[0] * M[2][0] + n[1] * M[2][1] + n[2] * M[2][2]);
 }
 
 bool find_intersection(Ray r, SceneNode* node, Intersection &inter){
@@ -27,8 +26,8 @@ bool find_intersection(Ray r, SceneNode* node, Intersection &inter){
     
     // Need to transform ray to object's model coords
     // Transform the ray to geonode's model coords using the inverse transform WCS -> MCS
-    r.origin = node->get_inverse() * r.origin;
-    r.direction = node->get_inverse() * r.direction;
+    r.origin = glm::vec3(node->get_inverse() * glm::vec4(r.origin, 1.0));
+    r.direction = glm::vec3(node->get_inverse() * glm::vec4(r.direction, 0.0));
     
     bool intersection_result = false;
     
@@ -39,6 +38,9 @@ bool find_intersection(Ray r, SceneNode* node, Intersection &inter){
         intersection_result = gnode->m_primitive->intersect(r.origin, r.direction, inter);
         if (intersection_result){
             inter.material = gnode->m_material;
+            //inter.inter_point = glm::vec3(node->get_transform() * glm::vec4(inter.inter_point, 1.0));
+            //inter.inter_normal = glm::vec3(glm::normalize(transNorm(node->get_inverse(), glm::vec4(inter.inter_normal, 0.0))));
+            //return true;
         }
     }
     
@@ -52,6 +54,9 @@ bool find_intersection(Ray r, SceneNode* node, Intersection &inter){
             if (inter.inter_point[0] == INFINITY || inter.inter_point[1] == INFINITY || inter.inter_point[2] == INFINITY ||
                 (glm::length(child_inter.inter_point - glm::vec3(r.origin))) < glm::length((inter.inter_point - glm::vec3(r.origin)))){
                 inter = child_inter;
+                //inter.inter_point = child_inter.inter_point;
+                //inter.inter_normal = child_inter.inter_normal;
+                //inter.material = child_inter.material;
             }
             intersection_result = true;
         }
@@ -60,7 +65,7 @@ bool find_intersection(Ray r, SceneNode* node, Intersection &inter){
     
     if (intersection_result){
         inter.inter_point = glm::vec3(node->get_transform() * glm::vec4(inter.inter_point, 1.0));
-        inter.inter_normal = glm::vec3(glm::normalize(transNorm(node->get_inverse(), glm::vec4(inter.inter_normal, 0.0))));
+        inter.inter_normal = glm::normalize(transNorm(node->get_inverse(), inter.inter_normal));
     }
 
     return intersection_result;
@@ -203,15 +208,14 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
         const PhongMaterial* material = dynamic_cast<const PhongMaterial*>(intersection.material);
         // Material does not emit light in this assignment so no ke
         glm::vec3 colour_vec = material->get_kd() * ambient;
-        glm::vec4 p = glm::vec4(intersection.inter_point, 1.0) + (1e-2)*glm::vec4(intersection.inter_normal, 0.0);
+        glm::vec3 p = intersection.inter_point + (1e-2)*intersection.inter_normal;
         
         // For all the different light sources...
         for(auto light : lights)
         {
-            
             // Shoot shadow ray to the light source to determine amount of colour is "shown" via the light source
             // Shadow ray origin is p and direction is light's position - p
-            Ray shadow_ray = {p, glm::vec4(light->position, 1.0) - p};
+            Ray shadow_ray = {p, light->position - p};
             // Create new intersection object for the shadow ray
             Intersection shadow_inter;
             
@@ -219,7 +223,7 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
             
             // Check if the shadow ray hits another object (ie. the light is blocked)
             if(find_intersection(shadow_ray, root, shadow_inter) &&
-               (glm::length(shadow_inter.inter_point - glm::vec3(shadow_ray.origin)) < glm::length(light->position - glm::vec3(shadow_ray.origin)))){
+               (glm::length(shadow_inter.inter_point - shadow_ray.origin) < glm::length(light->position - shadow_ray.origin))){
                 // Don't add the colour for this light source since it is blocked by an object in front of the light source
                 continue;
             }
@@ -292,14 +296,14 @@ void A4_Render(
         for (int x = 0; x < image.width(); x++) {
             // Pixel to World Coords
             glm::vec4 pixel = glm::vec4(x, y, 0.0, 1.0);
-            glm::vec4 p = pixel_to_world * pixel;
+            glm::vec3 p = glm::vec3(pixel_to_world * pixel);
         
             //std::cout << view.length() << std::endl;
             //std::cout << "pixel: " << glm::to_string(pixel) << std::endl;
             //std::cout << "p: " << glm::to_string(p) << std::endl;
             
             // Create the ray with origin at the eye point
-            Ray ray = {glm::vec4(eye, 1.0), p - glm::vec4(eye, 1.0)};
+            Ray ray = {eye, p - eye};
             
             // Background colour (for now its just white)
             glm::vec3 background_col = glm::vec3(0.0, 0.0, 0.0);

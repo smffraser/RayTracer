@@ -10,7 +10,7 @@ Sphere::~Sphere()
 }
 
 
-bool Sphere::intersect(const glm::vec4 origin, const glm::vec4 direction, Intersection &inter) const
+bool Sphere::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersection &inter) const
 {
     NonhierSphere sphere(glm::vec3(0.0, 0.0, 0.0), 1.0);
     return sphere.intersect(origin, direction, inter);
@@ -20,7 +20,7 @@ Cube::~Cube()
 {
 }
 
-bool Cube::intersect(const glm::vec4 origin, const glm::vec4 direction, Intersection &inter) const
+bool Cube::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersection &inter) const
 {
     NonhierBox box(glm::vec3(0.0, 0.0, 0.0), 1.0);
     return box.intersect(origin, direction, inter);
@@ -30,11 +30,11 @@ NonhierSphere::~NonhierSphere()
 {
 }
 
-bool NonhierSphere::intersect(const glm::vec4 origin, const glm::vec4 direction, Intersection &inter) const{
+bool NonhierSphere::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersection &inter) const{
     
     double roots[2];
-    glm::vec3 og = glm::vec3(origin);
-    glm::vec3 di = glm::vec3(direction);
+    glm::vec3 og = origin;
+    glm::vec3 di = direction;
     
     // solve for t = (-B +- sqrt(B^2 - 4AC))/(2A)
     // A = (b-a)(b-a)
@@ -90,7 +90,7 @@ NonhierBox::~NonhierBox()
 {
 }
 
-bool NonhierBox::intersect(const glm::vec4 origin, const glm::vec4 direction, Intersection &inter) const{
+bool NonhierBox::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersection &inter) const{
     
     glm::vec3 min_bound = m_pos;
     glm::vec3 max_bound = m_pos + glm::vec3(m_size);
@@ -210,7 +210,7 @@ bool NonhierBox::intersect(const glm::vec4 origin, const glm::vec4 direction, In
     }
     
     // Calculate point of intersection using tmin (the smaller and thus "in front" of the sides
-    inter.inter_point = glm::vec3(origin) + (float)tmin*glm::vec3(direction);
+    inter.inter_point = origin + (float)tmin*direction;
     inter.inter_normal = min_normal;
     
     return true;

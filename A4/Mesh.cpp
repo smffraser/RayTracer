@@ -26,7 +26,7 @@ Mesh::Mesh( const std::string& fname )
 	}
 }
 
-bool Mesh::intersect(const glm::vec4 origin, const glm::vec4 direction, Intersection &inter) const {
+bool Mesh::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersection &inter) const {
     
     // Go through each face of the mesh and check if the ray intersects with that face
     //  Steps to find intersection:
@@ -55,12 +55,12 @@ bool Mesh::intersect(const glm::vec4 origin, const glm::vec4 direction, Intersec
         // Find the point of intersection
         // 2) Determine if the ray and the face are parallel
         // 0 or almost 0
-        if (fabs(glm::dot(face_normal, glm::vec3(direction))) < std::numeric_limits<double>::epsilon()){
+        if (fabs(glm::dot(face_normal, direction)) < std::numeric_limits<double>::epsilon()){
             continue;
         }
         
         // 3) Compute t
-        double t = glm::dot(face_normal, p0 - glm::vec3(origin)) / glm::dot(face_normal, glm::vec3(direction));
+        double t = glm::dot(face_normal, p0 - origin) / glm::dot(face_normal, direction);
         
         // Check if the triangle is behind the ray
         // Also check if another face is closer (ie has a smaller t)
@@ -69,7 +69,7 @@ bool Mesh::intersect(const glm::vec4 origin, const glm::vec4 direction, Intersec
         }
         
         // 4) Determine intersection point P
-        glm::vec3 P = glm::vec3(origin) + t*glm::vec3(direction);
+        glm::vec3 P = origin + t*direction;
         
         // 5) Inside out test
         // Vector that is perpendicular to the triangle's plane
