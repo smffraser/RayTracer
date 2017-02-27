@@ -26,7 +26,65 @@ Mesh::Mesh( const std::string& fname )
 	}
 }
 
+NonhierBox Mesh::getBoundingBox() const{
+    
+    // Set the starting min and max positions to be the first vertice in the mesh list
+    glm::vec3 min_vec = m_vertices[0] ;
+    glm::vec3 max_vec = m_vertices[0] ;
+    
+    for (std::vector<const glm::vec3>::iterator it = m_vertices.begin() ; it != m_vertices.end(); ++it){
+        // Check if the x value of the current vertice is smaller than the min
+        // or larger than the max
+        if ((*it).x < min_vec.x) {
+            min_vec.x = (*it).x;
+        }
+        if ((*it).x > max_vec.x) {
+            max_vec.x = (*it).x;
+        }
+        
+        // Check if the y value of the current vertice is smaller than the min
+        // or larger than the max
+        if ((*it).y < min_vec.y) {
+            min_vec.y = (*it).y;
+        }
+        if ((*it).y > max_vec.y) {
+            max_vec.y = (*it).y;
+        }
+        
+        // Check if the x value of the current vertice is smaller than the min
+        // or larger than the max
+        if ((*it).z < min_vec.z) {
+            min_vec.z = (*it).z;
+        }
+        if ((*it).z > max_vec.z) {
+            max_vec.z = (*it).z;
+        }
+    }
+    
+    // Should now have the min and max points of the bounding box (aka the bottom back corner and top front corner)
+    // Get the scale number
+    double scale_by = max_vec.x - min_vec.x ;
+    if (max_vec.y - min_vec.y > scale_by) {
+        scale_by = max_vec.y - min_vec.y;
+    }
+    if (max_vec.z - min_vec.z > scale_by) {
+        scale_by = max_vec.z - min_vec.z;
+    }
+    
+    return NonhierBox(min_vec, scale_by);
+}
+
 bool Mesh::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersection &inter) const {
+    
+    // Before we try to find intersections with the mesh, look at its bounding box...
+    Intersection bound_inter ;
+    NonhierBox bounding_box = getBoundingBox();
+    bool bounding_result = bounding_box.intersect(origin, direction, bound_inter);
+    
+    // If bounding_result is false (aka there was no intersection then stop here...
+    if (!bounding_result) {
+        return false;
+    }
     
     // Go through each face of the mesh and check if the ray intersects with that face
     //  Steps to find intersection:
@@ -38,8 +96,8 @@ bool Mesh::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersec
     // This means the ray intersects the triangle and the intersection point is INSIDE the triangle's boundaries
     
     //std::cout << "num faces " << m_faces.size() << std::endl;
-    
     double min_t = std::numeric_limits<double>::infinity();
+    bool intersection_result = false;
     
     for(Triangle face: m_faces){
         
@@ -50,7 +108,7 @@ bool Mesh::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersec
         glm::vec3 p2 = m_vertices[face.v3];
         
         // 1) Compute the face's normal
-        glm::vec3 face_normal = glm::cross((p1-p0),(p2-p0));
+        glm::vec3 face_normal = glm::normalize(glm::cross((p1-p0),(p2-p0)));
         
         // Find the point of intersection
         // 2) Determine if the ray and the face are parallel
@@ -74,6 +132,8 @@ bool Mesh::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersec
         // 5) Inside out test
         // Vector that is perpendicular to the triangle's plane
         glm::vec3 C;
+        
+        // Check all three triangle edges
         
         // Side 0 p1 - p0
         glm::vec3 edge0 = p1 - p0;
@@ -107,12 +167,12 @@ bool Mesh::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersec
         
         // Ray is in the face
         inter.inter_point = P;
-        inter.inter_normal = glm::normalize(face_normal);
+        inter.inter_normal = face_normal;
         min_t = t;
-        return true;
+        intersection_result = true;
     }
     
-    return false;
+    return intersection_result;
 }
 
 std::ostream& operator<<(std::ostream& out, const Mesh& mesh)
