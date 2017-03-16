@@ -34,7 +34,7 @@ NonhierBox Mesh::getBoundingBox() const{
     glm::vec3 min_vec = m_vertices[0] ;
     glm::vec3 max_vec = m_vertices[0] ;
     
-    for (std::vector<const glm::vec3>::iterator it = m_vertices.begin() ; it != m_vertices.end(); ++it){
+    for (std::vector<glm::vec3>::const_iterator it = m_vertices.begin() ; it != m_vertices.end(); ++it){
         // Check if the x value of the current vertice is smaller than the min
         // or larger than the max
         if ((*it).x < min_vec.x) {

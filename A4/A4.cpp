@@ -7,6 +7,7 @@
 #include "A4.hpp"
 
 #define SUPERSAMPLE
+//#define STARS
 
 
 struct Ray {
@@ -276,22 +277,7 @@ void A4_Render(
 	}
 	std::cout << "\t}" << std::endl;
 	std:: cout <<")" << std::endl;
-/*
-	size_t h = image.height();
-	size_t w = image.width();
 
-	for (uint y = 0; y < h; ++y) {
-		for (uint x = 0; x < w; ++x) {
-			// Red: increasing from top to bottom
-			image(x, y, 0) = (double)y / h;
-			// Green: increasing from left to right
-			image(x, y, 1) = (double)x / w;
-			// Blue: in lower-left and upper-right corners
-			image(x, y, 2) = ((y < h/2 && x < w/2)
-						  || (y >= h/2 && x >= w/2)) ? 1.0 : 0.0;
-		}
-	}
- */
     glm::mat4 pixel_to_world = world_pixels(image.width(), image.height(), eye, fovy, view, up);
     int total_pixels = image.height() * image.width();
     int current_pixel = 1;
@@ -308,13 +294,28 @@ void A4_Render(
                 
             }
             
+            // Background colour
+            glm::vec3 background_col = ((y) & 0x10) ? ((double)y/image.height()*glm::vec3(0.25, 0.25, 0.25)) + glm::vec3(0.68, 0.91, 0.99) : ((image.height() - (double)y)/image.height()*glm::vec3(0.25, 0.25, 0.25)) + glm::vec3(0.68, 0.91, 0.99);
+            
+            
+#ifdef STARS
+            //glm::vec3 background_col = ((x+y) & 0x10) ? (double)y/image.height() * glm::vec3(1.0, 1.0, 1.0) : glm::vec3(0.0, 0.0, 0.0);
+            int star = rand()% 50 ;
+            if (star == 1){
+                background_col = glm::vec3(1.0, 1.0, 1.0);
+            } else {
+                background_col = glm::vec3(0.0, 0.0, 0.0);
+            }
+            
+#endif
+            
 #ifdef SUPERSAMPLE
             
             // Super sampling - sample four corners of pixel instead of just top left corner
-            glm::vec4 pixel_tl = glm::vec4(x, y, 0.0, 1.0);
-            glm::vec4 pixel_tr = glm::vec4(x+1, y, 0.0, 1.0);
-            glm::vec4 pixel_bl = glm::vec4(x, y+1, 0.0, 1.0);
-            glm::vec4 pixel_br = glm::vec4(x+1, y+1, 0.0, 1.0);
+            glm::vec4 pixel_tl = glm::vec4(x+0.25, y+0.25, 0.0, 1.0);
+            glm::vec4 pixel_tr = glm::vec4(x+0.75, y+0.25, 0.0, 1.0);
+            glm::vec4 pixel_bl = glm::vec4(x+0.25, y+0.75, 0.0, 1.0);
+            glm::vec4 pixel_br = glm::vec4(x+0.75, y+0.75, 0.0, 1.0);
             
             // Get pixels in world coords
             glm::vec3 p_tl = glm::vec3(pixel_to_world * pixel_tl);
@@ -327,9 +328,6 @@ void A4_Render(
             Ray ray_tr = {eye, p_tr - eye};
             Ray ray_bl = {eye, p_bl - eye};
             Ray ray_br = {eye, p_br - eye};
-            
-            // Set background colour
-            glm::vec3 background_col = glm::vec3(0.0, 0.0, 0.0);
             
             // Get 4 colours
             glm::vec3 colour_tl = ray_colour(ray_tl, background_col, root, ambient, lights);
@@ -356,9 +354,6 @@ void A4_Render(
             // Create the ray with origin at the eye point
             Ray ray = {eye, p - eye};
             
-            // Background colour (for now its just white)
-            glm::vec3 background_col = glm::vec3(0.0, 0.0, 0.0);
-            
             // Cast ray into the scene and get the colour returned
             glm::vec3 colour = ray_colour(ray, background_col, root, ambient, lights);
             
@@ -371,26 +366,4 @@ void A4_Render(
 #endif
         }
     }
-    
-    /*
-    // Pixel to World Coords
-    glm::vec4 pixel = glm::vec4(148, 126, 0.0, 1.0);
-    glm::vec4 p = pixel_to_world * pixel;
-    
-    //std::cout << view.length() << std::endl;
-    //std::cout << "pixel: " << glm::to_string(pixel) << std::endl;
-    //std::cout << "p: " << glm::to_string(p) << std::endl;
-    
-    // Create the ray with origin at the eye point
-    Ray ray = {glm::vec4(eye, 1.0), p - glm::vec4(eye, 1.0)};
-    
-    // Background colour (for now its just white)
-    glm::vec3 background_col = glm::vec3(0.0, 0.0, 0.0);
-    
-    // Cast ray into the scene and get the colour returned
-    glm::vec3 colour = ray_colour(ray, background_col, root, ambient, lights);
-    
-    //image(x, y, 0) = colour[0];
-    //image(x, y, 1) = colour[1];
-    //image(x, y, 2) = colour[2];*/
 }
