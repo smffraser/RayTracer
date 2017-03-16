@@ -21,3 +21,7 @@ glm::vec3 PhongMaterial::get_kd() const {
 double PhongMaterial::get_shininess() const {
     return m_shininess;
 }
+
+bool PhongMaterial::zero_ks() const {
+    return m_ks == glm::vec3(0.0, 0.0, 0.0);
+}

@@ -6,7 +6,7 @@
 
 #include "A4.hpp"
 
-#define SUPERSAMPLE
+//#define SUPERSAMPLE
 //#define STARS
 
 
@@ -203,7 +203,7 @@ glm::vec3 determine_lighting(Ray r, Intersection &inter, Light* light, const Pho
     return attenuation * (diffuse_colour + specular_colour);
 }
 
-glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & ambient, const std::list<Light *> & lights){
+glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & ambient, const std::list<Light *> & lights, int reflect_count){
     
     Intersection intersection;
     if (find_intersection(r, root, intersection)){
@@ -235,7 +235,15 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
             colour_vec = colour_vec + determine_lighting(r, intersection, light, material);
         }
         
-        return colour_vec;
+        // Define a reflective colour. White will suffice
+        glm::vec3 reflected_colour(0.0, 0.0, 0.0);
+        // Check if we have any more reflective rays to send
+        if (!material->zero_ks() && reflect_count > 0){
+            Ray reflective_ray = {p, r.direction - 2*glm::dot(r.direction, intersection.inter_normal)*intersection.inter_normal};
+            reflected_colour = ray_colour(reflective_ray, reflected_colour, root, ambient, lights, reflect_count--);
+        }
+        
+        return colour_vec + (1.0 / lights.size()) * reflected_colour * material->get_ks();
     }
 
     return bg;
@@ -330,10 +338,10 @@ void A4_Render(
             Ray ray_br = {eye, p_br - eye};
             
             // Get 4 colours
-            glm::vec3 colour_tl = ray_colour(ray_tl, background_col, root, ambient, lights);
-            glm::vec3 colour_tr = ray_colour(ray_tr, background_col, root, ambient, lights);
-            glm::vec3 colour_bl = ray_colour(ray_bl, background_col, root, ambient, lights);
-            glm::vec3 colour_br = ray_colour(ray_br, background_col, root, ambient, lights);
+            glm::vec3 colour_tl = ray_colour(ray_tl, background_col, root, ambient, lights, 5);
+            glm::vec3 colour_tr = ray_colour(ray_tr, background_col, root, ambient, lights, 5);
+            glm::vec3 colour_bl = ray_colour(ray_bl, background_col, root, ambient, lights, 5);
+            glm::vec3 colour_br = ray_colour(ray_br, background_col, root, ambient, lights, 5);
             
             image(x, y, 0) = (colour_tl[0] + colour_tr[0] + colour_bl[0] + colour_br[0]) / 4.0f;
             image(x, y, 1) = (colour_tl[1] + colour_tr[1] + colour_bl[1] + colour_br[1]) / 4.0f;
@@ -355,7 +363,7 @@ void A4_Render(
             Ray ray = {eye, p - eye};
             
             // Cast ray into the scene and get the colour returned
-            glm::vec3 colour = ray_colour(ray, background_col, root, ambient, lights);
+            glm::vec3 colour = ray_colour(ray, background_col, root, ambient, lights, 5);
             
             image(x, y, 0) = colour[0];
             image(x, y, 1) = colour[1];

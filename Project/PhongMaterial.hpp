@@ -11,6 +11,7 @@ public:
     glm::vec3 get_ks() const;
     glm::vec3 get_kd() const;
     double get_shininess() const;
+    bool zero_ks() const;
 
 private:
   glm::vec3 m_kd;
