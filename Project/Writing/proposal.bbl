@@ -1,0 +1,72 @@
+\begin{thebibliography}{10}
+
+\bibitem{roth}
+Scott~D Roth.
+\newblock Ray casting for modeling solids.
+\newblock {\em Computer Graphics and Image Processing}, 18(2):109 -- 144, 1982.
+
+\bibitem{glassner}
+Andrew~S. Glassner.
+\newblock {\em An Introduction to Ray Tracing}.
+\newblock Elsevier, 1989.
+
+\bibitem{prim_web}
+Nikos Drakos.
+\newblock Ray tracing primitives, 1997.
+
+\bibitem{lectures_general}
+Gladimir V.~G. Baranoski.
+\newblock Introduction to computer graphics.
+\newblock University Lecture, 2017.
+
+\bibitem{mitchell}
+Don~P Mitchell.
+\newblock The antialiasing problem in ray tracing.
+\newblock {\em SIGGRAPH 1990 Course Notes}.
+
+\bibitem{lectures_refl}
+Gladimir V.~G. Baranoski.
+\newblock Introduction to computer graphics: Reflection and refraction.
+\newblock University Lecture, 2017.
+
+\bibitem{blinn_newell}
+James~F. Blinn and Martin~E. Newell.
+\newblock Texture and reflection in computer generated images.
+\newblock {\em Communications of the ACM}, 19(10):542--547, 1976.
+
+\bibitem{de_greve}
+Bram de~Greve.
+\newblock Reflections and refractions in ray tracing, 2006.
+
+\bibitem{hughes}
+John~F Hughes and Tomas Moller.
+\newblock Building an orthonormal basis from a unit vector.
+\newblock {\em Journal of Graphics Tools}, 4(4):33--35, 1999.
+
+\bibitem{shirley}
+Peter Shirley, Michael Ashikhmin, and Steve Marschner.
+\newblock {\em Fundamentals of Computer Graphics}.
+\newblock A. K. Peters, Ltd., Natick, MA, USA, 2nd edition, 2005.
+
+\bibitem{lectures_text}
+Gladimir V.~G. Baranoski.
+\newblock Introduction to computer graphics: Texture mapping.
+\newblock University Lecture, 2017.
+
+\bibitem{blinn}
+James~F. Blinn.
+\newblock Simulation of wrinkled surfaces.
+\newblock {\em ACM SIGGRAPH Computer Graphics}, 12(3):286--292, 1978.
+
+\bibitem{watt}
+Alan~H. Watt.
+\newblock {\em Advanced Animation and Rendering Techniques: Theory and
+  Practise}.
+\newblock ACM Press, 1992.
+
+\bibitem{lectures_bump}
+Gladimir V.~G. Baranoski.
+\newblock Introduction to computer graphics: Bump mapping.
+\newblock University Lecture, 2017.
+
+\end{thebibliography}
