@@ -91,8 +91,6 @@ glm::mat4 world_pixels(size_t width, size_t height, glm::vec3 lookfrom, double f
     // Translate point by (-nx/2, -ny/2, d) where d = depth of the view (ie. view.length) and nx = image width and ny = image height
     glm::mat4 T1 = glm::mat4();
     T1 = glm::column(T1, 3, glm::vec4((double)width*(-1)/2.0, (double)height*(-1)/2.0, glm::length(view), 1.0));
-    
-    //std::cout << glm::to_string(T1) << std::endl;
    
     // Scale point by (-h/ny, w/nx, 1) to preserve the aspect ratio
     glm::mat4 S2 = glm::mat4();
@@ -106,8 +104,6 @@ glm::mat4 world_pixels(size_t width, size_t height, glm::vec3 lookfrom, double f
     S2 = glm::column(S2, 1, glm::vec4(0.0, ((-1.0f)*w/(double)width), 0.0, 0.0));
     S2 = glm::column(S2, 2, glm::vec4(0.0, 0.0, 1.0, 0.0));
     
-    //std::cout << glm::to_string(S2 * T1 * p) << std::endl;
-    
     // Rotate to superimpose WCS to VCS
     // R3 = [ ux vx wx 0 ]
     //      [ uy vy wy 0 ]
@@ -120,21 +116,12 @@ glm::mat4 world_pixels(size_t width, size_t height, glm::vec3 lookfrom, double f
     // normalize view matrix just to be safe
     glm::vec3 w_norm = glm::normalize(view - lookfrom);
     // normalize up matrix just to be safe
-    glm::vec3 up_norm = glm::normalize(up);
+    //glm::vec3 up_norm = glm::normalize(up);
     // Get u from cross of up_norm and w
     // Normalize it
-    glm::vec3 u_norm = glm::normalize(glm::cross(up_norm, w_norm));
+    glm::vec3 u_norm = glm::normalize(glm::cross(up, w_norm));
     // Get v from cross of w and up
     glm::vec3 v_norm = glm::normalize(glm::cross(w_norm, u_norm));
-    
-    
-    // Calculate the basis for the view coordinate system
-    //view = glm::normalize(view);
-    //up = glm::normalize(up);
-    //glm::vec3 u = glm::cross(up,view);
-    //u = glm::normalize(u);
-    //glm::vec3 v = glm::cross(view, u);
-    //v = glm::normalize(v);
 
     glm::mat4 R3 = glm::mat4(glm::vec4(u_norm, 0.0),
                              glm::vec4(v_norm, 0.0),
@@ -231,8 +218,8 @@ Ray get_refracted_ray (Ray incident, Intersection intersection, double index, bo
     glm::vec3 t_origin = glm::vec3(0, 0, 0);
     glm::vec3 t_direction = glm::vec3(0, 0, 0);
     
-    glm::vec3 norm_v = glm::normalize(incident.direction);
-    //glm::vec3 norm_v = incident.direction;
+    //glm::vec3 norm_v = glm::normalize(incident.direction);
+    glm::vec3 norm_v = incident.direction;
     glm::vec3 normal = intersection.inter_normal;
     
     // Check if the incident ray is entering or exiting a primitive
@@ -372,7 +359,7 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
         // in the final colour
         
         //std::cout << "colour_vec: " << glm::to_string(colour_vec) << std::endl;
-        //return colour_vec + material->get_ks() * ((fresnel_R * reflected_colour) + ((1 - fresnel_R) * refracted_colour));
+        //return colour_vec + material->get_ks() * ((fresnel_R * reflected_colour) + ((1.0 - fresnel_R) * refracted_colour));
         return colour_vec + material->get_ks() * reflected_colour + refracted_colour;
         //return colour_vec;
         //return colour_vec + (1.0 / lights.size()) * reflected_colour * material->get_ks();
@@ -411,8 +398,9 @@ void thread_render(SceneNode *root, Image & image, const glm::vec3 & eye, const 
             //std::cout << "pixel: " << glm::to_string(pixel) << std::endl;
             //std::cout << "p: " << glm::to_string(p) << std::endl;
             
+        
             // Create the ray with origin at the eye point
-            Ray ray = {eye, p - eye};
+            Ray ray = {eye, glm::normalize(p - eye)};
             
             // Cast ray into the scene and get the colour returned
             glm::vec3 colour = ray_colour(ray, background_col, root, ambient, lights, 5, 5);
@@ -472,6 +460,8 @@ void A4_Render(
 	std:: cout <<")" << std::endl;
 
     glm::mat4 pixel_to_world = world_pixels(image.width(), image.height(), eye, fovy, view, up);
+    
+    std::cout << glm::to_string(pixel_to_world) << std::endl;
 
     // x is width, y is height
     int num_threads = 1;
