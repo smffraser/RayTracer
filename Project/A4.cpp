@@ -34,6 +34,8 @@ bool find_intersection(Ray r, SceneNode* node, Intersection &inter){
     r.origin = glm::vec3(node->get_inverse() * glm::vec4(r.origin, 1.0));
     r.direction = glm::vec3(node->get_inverse() * glm::vec4(r.direction, 0.0));
     
+    std::string name;
+    
     bool intersection_result = false;
     
     // Check if Geo Node
@@ -42,6 +44,7 @@ bool find_intersection(Ray r, SceneNode* node, Intersection &inter){
         GeometryNode *gnode = static_cast<GeometryNode*>(node);
         intersection_result = gnode->m_primitive->intersect(r.origin, r.direction, inter);
         if (intersection_result){
+            name = node->m_name;
             inter.material = gnode->m_material;
             //inter.inter_point = glm::vec3(node->get_transform() * glm::vec4(inter.inter_point, 1.0));
             //inter.inter_normal = glm::vec3(glm::normalize(transNorm(node->get_inverse(), glm::vec4(inter.inter_normal, 0.0))));
@@ -59,6 +62,7 @@ bool find_intersection(Ray r, SceneNode* node, Intersection &inter){
             if (inter.inter_point[0] == INFINITY || inter.inter_point[1] == INFINITY || inter.inter_point[2] == INFINITY ||
                 (glm::length(child_inter.inter_point - glm::vec3(r.origin))) < glm::length((inter.inter_point - glm::vec3(r.origin)))){
                 inter = child_inter;
+                name = child->m_name;
                 //inter.inter_point = child_inter.inter_point;
                 //inter.inter_normal = child_inter.inter_normal;
                 //inter.material = child_inter.material;
@@ -69,10 +73,11 @@ bool find_intersection(Ray r, SceneNode* node, Intersection &inter){
     }
     
     if (intersection_result){
+        //std::cout << "intersection with object: " << name << std::endl;
         inter.inter_point = glm::vec3(node->get_transform() * glm::vec4(inter.inter_point, 1.0));
         inter.inter_normal = glm::normalize(transNorm(node->get_inverse(), inter.inter_normal));
     }
-
+    
     return intersection_result;
 }
 
@@ -113,14 +118,14 @@ glm::mat4 world_pixels(size_t width, size_t height, glm::vec3 lookfrom, double f
     //       v = w x n
     
     // normalize view matrix just to be safe
-    glm::vec3 w_norm = glm::normalize(view);
+    glm::vec3 w_norm = glm::normalize(view - lookfrom);
     // normalize up matrix just to be safe
     glm::vec3 up_norm = glm::normalize(up);
     // Get u from cross of up_norm and w
     // Normalize it
     glm::vec3 u_norm = glm::normalize(glm::cross(up_norm, w_norm));
     // Get v from cross of w and up
-    glm::vec3 v_norm = glm::cross(w_norm, u_norm);
+    glm::vec3 v_norm = glm::normalize(glm::cross(w_norm, u_norm));
     
     
     // Calculate the basis for the view coordinate system
@@ -205,47 +210,172 @@ glm::vec3 determine_lighting(Ray r, Intersection &inter, Light* light, const Pho
     return attenuation * (diffuse_colour + specular_colour);
 }
 
-glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & ambient, const std::list<Light *> & lights, int reflect_count){
+double get_fresnel_R(double n1, double n2, double in_out, double square_root, glm::vec3 direction, glm::vec3 normal){
+    
+    double R0 = ((n1 - n2)*(n1 - n2))/((n1 + n2)*(n1 + n2));
+    double R = R0 + (1-R0)*pow((1-glm::dot(direction, normal)),5);
+    
+    // Compute Fresnel coefficient
+    double a = (n1 * in_out - n2 * square_root) / (n1 * in_out + n2 * square_root);
+    double b = (n2 * in_out - n1 * square_root) / (n2 * in_out + n1 * square_root);
+    double R2 = ((a * a) + (b * b)) * 0.5;
+    
+    return R2;
+}
+
+Ray get_refracted_ray (Ray incident, Intersection intersection, double index, bool& totalInternalReflection, double& fresnel) {
+    double n_i, n_t; // indices of refraction for the two mediums
+    double n; // will store n_i/n_t
+    
+    // refracted ray origin and direction
+    glm::vec3 t_origin = glm::vec3(0, 0, 0);
+    glm::vec3 t_direction = glm::vec3(0, 0, 0);
+    
+    glm::vec3 norm_v = glm::normalize(incident.direction);
+    //glm::vec3 norm_v = incident.direction;
+    glm::vec3 normal = intersection.inter_normal;
+    
+    // Check if the incident ray is entering or exiting a primitive
+    // If the normal and the incident ray have a negative dot product, then the ray is entering the primitive
+    if (glm::dot(norm_v, normal) < 0) {
+        // incident ray entered primitive
+        std::cout << "entering" << std::endl;
+        n_i = 1.0;
+        n_t = index;
+    } else {
+        // incident ray exited primitive
+        std::cout << "exiting" << std::endl;
+        n_i = index;
+        n_t = 1.0;
+        
+        // need to flip the normal
+        normal = (-1) * normal;
+    }
+    n = n_i/n_t;
+    std::cout << "n: " << n << std::endl;
+    double vndot = glm::dot(norm_v, normal) < 0;
+    double bigugly = 1 - (pow(n, 2) * (1-pow(vndot,2)));
+    if (bigugly < 0) {
+        // total internal reflection
+        std::cout << "total internal" << std::endl;
+        totalInternalReflection = true;
+        // return a dud ray
+        
+        return Ray{t_origin, t_direction};
+    } else {
+        totalInternalReflection = false;
+        t_origin = intersection.inter_point + (-(1e-2)*normal);
+        t_direction = ((-1)*n*vndot - sqrt(bigugly))*normal + (n*norm_v);
+        std::cout << "incident: " << glm::to_string(norm_v) << std::endl;
+        std::cout << "refracted direction: " << glm::to_string(t_direction) << std::endl;
+        fresnel = get_fresnel_R(n_i, n_t, vndot, sqrt(bigugly), norm_v, normal);
+        return Ray{t_origin, t_direction};
+    }
+}
+
+glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & ambient, const std::list<Light *> & lights, int reflect_count, int refract_count){
     
     Intersection intersection;
     if (find_intersection(r, root, intersection)){
+        
+        if (refract_count < 4){
+        //    std::cout << "refract hit something past itself" << std::endl;
+        }
         
         const PhongMaterial* material = dynamic_cast<const PhongMaterial*>(intersection.material);
         // Material does not emit light in this assignment so no ke
         glm::vec3 colour_vec = material->get_kd() * ambient;
         glm::vec3 p = intersection.inter_point + (1e-2)*intersection.inter_normal;
         
-        // For all the different light sources...
-        for(auto light : lights)
-        {
-            // Shoot shadow ray to the light source to determine amount of colour is "shown" via the light source
-            // Shadow ray origin is p and direction is light's position - p
-            Ray shadow_ray = {p, light->position - p};
-            // Create new intersection object for the shadow ray
-            Intersection shadow_inter;
-            
-            // Make sure to check if intersection point is before light source
-            
-            // Check if the shadow ray hits another object (ie. the light is blocked)
-            if(find_intersection(shadow_ray, root, shadow_inter) &&
-               (glm::length(shadow_inter.inter_point - shadow_ray.origin) < glm::length(light->position - shadow_ray.origin))){
-                // Don't add the colour for this light source since it is blocked by an object in front of the light source
-                continue;
+        if (!material->zero_kd()){
+            // For all the different light sources...
+            for(auto light : lights)
+            {
+                // Shoot shadow ray to the light source to determine amount of colour is "shown" via the light source
+                // Shadow ray origin is p and direction is light's position - p
+                Ray shadow_ray = {p, light->position - p};
+                // Create new intersection object for the shadow ray
+                Intersection shadow_inter;
+                
+                // Make sure to check if intersection point is before light source
+                
+                // Check if the shadow ray hits another object (ie. the light is blocked)
+                if(find_intersection(shadow_ray, root, shadow_inter) &&
+                   (glm::length(shadow_inter.inter_point - shadow_ray.origin) < glm::length(light->position - shadow_ray.origin))){
+                    // Don't add the colour for this light source since it is blocked by an object in front of the light source
+                    continue;
+                }
+                
+                // "Add" the colour for this light source to the object
+                colour_vec = colour_vec + determine_lighting(r, intersection, light, material);
             }
-            
-            // "Add" the colour for this light source to the object
-            colour_vec = colour_vec + determine_lighting(r, intersection, light, material);
         }
         
-        // Define a reflective colour. White will suffice
+        // Define a reflective colour. Black will suffice
         glm::vec3 reflected_colour(0.0, 0.0, 0.0);
         // Check if we have any more reflective rays to send
         if (!material->zero_ks() && reflect_count > 0){
             Ray reflective_ray = {p, r.direction - 2*glm::dot(r.direction, intersection.inter_normal)*intersection.inter_normal};
-            reflected_colour = ray_colour(reflective_ray, reflected_colour, root, ambient, lights, reflect_count--);
+            reflected_colour = ray_colour(reflective_ray, reflected_colour, root, ambient, lights, reflect_count - 1, refract_count);
+            //colour_vec = colour_vec + material->get_ks() * reflected_colour;
         }
         
-        return colour_vec + (1.0 / lights.size()) * reflected_colour * material->get_ks();
+        double fresnel_R = 1.0;
+        glm::vec3 refracted_colour(0.0, 0.0, 0.0);
+        // Refraction
+        if (!material->zero_ks() && material->get_index() > 0.0 && refract_count > 0){
+            
+            /*
+            glm::vec3 norm = intersection.inter_normal;
+            double in_out = glm::dot(r.direction, norm);
+            double n1 = 1.0;
+            double n2 = 1.0;
+            
+            // If the dot product is positive, then exiting object
+            // Else, entering
+            if (in_out >= 0) {
+                n1 = material->get_index();
+                norm = (-1)*norm;
+            } else {
+                n2 = material->get_index();
+                //in_out = (-1)*in_out;
+            }
+            
+            double nr = n1/n2;
+            in_out = glm::dot(r.direction, norm);
+            double under_root = 1.0 - pow(nr, 2) * (1.0 - pow(in_out,2));
+            
+            // Check if under_root is negative. If so, then we have total internal reflection
+            // and thus should not shoot a relfected ray.
+            if (under_root >= 0){
+                double rooted = sqrt(under_root);
+                Ray refractive_ray = {intersection.inter_point - (1e-2)*norm, ((-1)*nr*in_out - rooted)*norm + nr*r.direction};
+                //t_direction = ((-1)*n*vndot - sqrt(bigugly))*normal + (n*incident.direction);
+                refracted_colour = ray_colour(refractive_ray, refracted_colour, root, ambient, lights, reflect_count, reflect_count - 1);
+                // Get the Fresnel coefficient R to calculate the final colour
+             
+            }
+             */
+         
+            bool totalInternalReflection = false;
+            Ray refractive_ray = get_refracted_ray(r, intersection, material->get_index(), totalInternalReflection, fresnel_R);
+            if (!totalInternalReflection) {
+                refracted_colour = ray_colour(refractive_ray, refracted_colour, root, ambient, lights, reflect_count, reflect_count - 1);
+                //colour_vec = colour_vec + refracted_colour;
+                std::cout << "fresnel: " << fresnel_R << std::endl;
+            }
+        }
+        
+        // Add the reflection and refraction colour components, scaling them by the Fresnel coefficient
+        // Note: If material has no shininess, ks will be 0.0 and thus no reflection/refraction will count
+        // Note 2: If either reflected_colour or refracted_colour stay as 0.0 then that colour component will not be
+        // in the final colour
+        
+        //std::cout << "colour_vec: " << glm::to_string(colour_vec) << std::endl;
+        //return colour_vec + material->get_ks() * ((fresnel_R * reflected_colour) + ((1 - fresnel_R) * refracted_colour));
+        return colour_vec + material->get_ks() * reflected_colour + refracted_colour;
+        //return colour_vec;
+        //return colour_vec + (1.0 / lights.size()) * reflected_colour * material->get_ks();
     }
 
     return bg;
@@ -269,7 +399,9 @@ void thread_render(SceneNode *root, Image & image, const glm::vec3 & eye, const 
             }
             
             // Background colour
-            glm::vec3 background_col = ((y) & 0x10) ? ((double)y/image.height()*glm::vec3(0.25, 0.25, 0.25)) + glm::vec3(0.68, 0.91, 0.99) : ((image.height() - (double)y)/image.height()*glm::vec3(0.25, 0.25, 0.25)) + glm::vec3(0.68, 0.91, 0.99);
+            //glm::vec3 background_col = ((y) & 0x10) ? ((double)y/image.height()*glm::vec3(0.25, 0.25, 0.25)) + glm::vec3(0.68, 0.91, 0.99) : ((image.height() - (double)y)/image.height()*glm::vec3(0.25, 0.25, 0.25)) + glm::vec3(0.68, 0.91, 0.99);
+            
+            glm::vec3 background_col = glm::vec3(0.0, 0.0, 0.0);
             
             // Pixel to World Coords
             glm::vec4 pixel = glm::vec4(x, y, 0.0, 1.0);
@@ -283,7 +415,11 @@ void thread_render(SceneNode *root, Image & image, const glm::vec3 & eye, const 
             Ray ray = {eye, p - eye};
             
             // Cast ray into the scene and get the colour returned
-            glm::vec3 colour = ray_colour(ray, background_col, root, ambient, lights, 5);
+            glm::vec3 colour = ray_colour(ray, background_col, root, ambient, lights, 5, 5);
+            
+            if (colour != background_col){
+                //exit(1);
+            }
             
             image(x, y, 0) = colour[0];
             image(x, y, 1) = colour[1];
@@ -338,7 +474,7 @@ void A4_Render(
     glm::mat4 pixel_to_world = world_pixels(image.width(), image.height(), eye, fovy, view, up);
 
     // x is width, y is height
-    int num_threads = 4;
+    int num_threads = 1;
     
     std::vector<std::thread> threads(num_threads);
     for(int i = 0; i < num_threads; i++)
