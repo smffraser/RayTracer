@@ -1,4 +1,6 @@
 #include <glm/ext.hpp>
+#include <thread>
+#include <vector>
 
 #include "GeometryNode.hpp"
 #include "PhongMaterial.hpp"
@@ -249,6 +251,53 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
     return bg;
 }
 
+void thread_render(SceneNode *root, Image & image, const glm::vec3 & eye, const glm::vec3 & view, const glm::vec3 & up, double fovy, const glm::vec3 & ambient, const std::list<Light *> & lights, glm::mat4 pixel_to_world, int start_x, int end_x, int start_y, int end_y, int thread_num, int y_skip) {
+    
+    int total_pixels = image.width() * image.height()/y_skip;
+    int current_pixel = 1;
+    int current_percent = 0;
+    
+    for (int y = start_y; y < end_y; y += y_skip) {
+        for (int x = start_x; x < end_x; x++) {
+            
+            if (int(floorf((float)current_pixel / (float)total_pixels*100))%1 == 0){
+                if (current_percent != int(floorf((float)current_pixel / (float)total_pixels*100))){
+                    std::cout << "Thread " << thread_num+1 << " Progress: " << int(floorf((float)current_pixel / (float)total_pixels*100)) << "%" << std::endl;
+                    current_percent = int(floorf((float)current_pixel / (float)total_pixels*100));
+                }
+                
+            }
+            
+            // Background colour
+            glm::vec3 background_col = ((y) & 0x10) ? ((double)y/image.height()*glm::vec3(0.25, 0.25, 0.25)) + glm::vec3(0.68, 0.91, 0.99) : ((image.height() - (double)y)/image.height()*glm::vec3(0.25, 0.25, 0.25)) + glm::vec3(0.68, 0.91, 0.99);
+            
+            // Pixel to World Coords
+            glm::vec4 pixel = glm::vec4(x, y, 0.0, 1.0);
+            glm::vec3 p = glm::vec3(pixel_to_world * pixel);
+            
+            //std::cout << view.length() << std::endl;
+            //std::cout << "pixel: " << glm::to_string(pixel) << std::endl;
+            //std::cout << "p: " << glm::to_string(p) << std::endl;
+            
+            // Create the ray with origin at the eye point
+            Ray ray = {eye, p - eye};
+            
+            // Cast ray into the scene and get the colour returned
+            glm::vec3 colour = ray_colour(ray, background_col, root, ambient, lights, 5);
+            
+            image(x, y, 0) = colour[0];
+            image(x, y, 1) = colour[1];
+            image(x, y, 2) = colour[2];
+            
+            current_pixel++;
+        }
+    }
+}
+
+void test_func(SceneNode * root, Image & image){
+    std::cout << "test " << image.width() << " " << image.height() << std::endl;
+}
+
 
 void A4_Render(
 		// What to render
@@ -287,91 +336,21 @@ void A4_Render(
 	std:: cout <<")" << std::endl;
 
     glm::mat4 pixel_to_world = world_pixels(image.width(), image.height(), eye, fovy, view, up);
-    int total_pixels = image.height() * image.width();
-    int current_pixel = 1;
-    int current_percent = 0;
+
+    // x is width, y is height
+    int num_threads = 4;
     
-    for (int y = 0; y < image.height(); y += 1) {
-        for (int x = 0; x < image.width(); x++) {
-            
-            if (int(floorf((float)current_pixel / (float)total_pixels*100))%1 == 0){
-                if (current_percent != int(floorf((float)current_pixel / (float)total_pixels*100))){
-                    std::cout << "Progress: " << int(floorf((float)current_pixel / (float)total_pixels*100)) << "%" << std::endl;
-                    current_percent = int(floorf((float)current_pixel / (float)total_pixels*100));
-                }
-                
-            }
-            
-            // Background colour
-            glm::vec3 background_col = ((y) & 0x10) ? ((double)y/image.height()*glm::vec3(0.25, 0.25, 0.25)) + glm::vec3(0.68, 0.91, 0.99) : ((image.height() - (double)y)/image.height()*glm::vec3(0.25, 0.25, 0.25)) + glm::vec3(0.68, 0.91, 0.99);
-            
-            
-#ifdef STARS
-            //glm::vec3 background_col = ((x+y) & 0x10) ? (double)y/image.height() * glm::vec3(1.0, 1.0, 1.0) : glm::vec3(0.0, 0.0, 0.0);
-            int star = rand()% 50 ;
-            if (star == 1){
-                background_col = glm::vec3(1.0, 1.0, 1.0);
-            } else {
-                background_col = glm::vec3(0.0, 0.0, 0.0);
-            }
-            
-#endif
-            
-#ifdef SUPERSAMPLE
-            
-            // Super sampling - sample four corners of pixel instead of just top left corner
-            glm::vec4 pixel_tl = glm::vec4(x+0.25, y+0.25, 0.0, 1.0);
-            glm::vec4 pixel_tr = glm::vec4(x+0.75, y+0.25, 0.0, 1.0);
-            glm::vec4 pixel_bl = glm::vec4(x+0.25, y+0.75, 0.0, 1.0);
-            glm::vec4 pixel_br = glm::vec4(x+0.75, y+0.75, 0.0, 1.0);
-            
-            // Get pixels in world coords
-            glm::vec3 p_tl = glm::vec3(pixel_to_world * pixel_tl);
-            glm::vec3 p_tr = glm::vec3(pixel_to_world * pixel_tr);
-            glm::vec3 p_bl = glm::vec3(pixel_to_world * pixel_bl);
-            glm::vec3 p_br = glm::vec3(pixel_to_world * pixel_br);
-            
-            // Create four rays
-            Ray ray_tl = {eye, p_tl - eye};
-            Ray ray_tr = {eye, p_tr - eye};
-            Ray ray_bl = {eye, p_bl - eye};
-            Ray ray_br = {eye, p_br - eye};
-            
-            // Get 4 colours
-            glm::vec3 colour_tl = ray_colour(ray_tl, background_col, root, ambient, lights, 5);
-            glm::vec3 colour_tr = ray_colour(ray_tr, background_col, root, ambient, lights, 5);
-            glm::vec3 colour_bl = ray_colour(ray_bl, background_col, root, ambient, lights, 5);
-            glm::vec3 colour_br = ray_colour(ray_br, background_col, root, ambient, lights, 5);
-            
-            image(x, y, 0) = (colour_tl[0] + colour_tr[0] + colour_bl[0] + colour_br[0]) / 4.0f;
-            image(x, y, 1) = (colour_tl[1] + colour_tr[1] + colour_bl[1] + colour_br[1]) / 4.0f;
-            image(x, y, 2) = (colour_tl[2] + colour_tr[2] + colour_bl[2] + colour_br[2]) / 4.0f;
-            
-            current_pixel++;
-            
-#else
-            
-            // Pixel to World Coords
-            glm::vec4 pixel = glm::vec4(x, y, 0.0, 1.0);
-            glm::vec3 p = glm::vec3(pixel_to_world * pixel);
-        
-            //std::cout << view.length() << std::endl;
-            //std::cout << "pixel: " << glm::to_string(pixel) << std::endl;
-            //std::cout << "p: " << glm::to_string(p) << std::endl;
-            
-            // Create the ray with origin at the eye point
-            Ray ray = {eye, p - eye};
-            
-            // Cast ray into the scene and get the colour returned
-            glm::vec3 colour = ray_colour(ray, background_col, root, ambient, lights, 5);
-            
-            image(x, y, 0) = colour[0];
-            image(x, y, 1) = colour[1];
-            image(x, y, 2) = colour[2];
-            
-            current_pixel++;
-            
-#endif
+    std::vector<std::thread> threads(num_threads);
+    for(int i = 0; i < num_threads; i++)
+    {
+        threads[i] = std::thread(thread_render, root, std::ref(image), eye, view, up, fovy, ambient, lights, pixel_to_world, 0, image.width(), i, image.height(), i, num_threads);
+        //threads[i] = std::thread(test_func, root, std::ref(image));
+        if(threads[i].get_id() == std::thread::id())
+        {
+            std::cerr << "Abort: Failed to create thread " << i << std::endl;
+            exit(EXIT_FAILURE);
         }
     }
+    
+    for(unsigned int i = 0; i < num_threads; i++) threads[i].join();
 }
