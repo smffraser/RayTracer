@@ -291,6 +291,9 @@ int gr_light_cmd(lua_State* L)
   get_tuple(L, 1, &l.position[0], 3);
   get_tuple(L, 2, col, 3);
   get_tuple(L, 3, l.falloff, 3);
+  l.width = luaL_optnumber(L, 4, 0.0);
+  l.height = luaL_optnumber(L, 5, 0.0);
+    
 
   l.colour = glm::vec3(col[0], col[1], col[2]);
   
@@ -346,11 +349,12 @@ int gr_render_cmd(lua_State* L)
     int num_threads = luaL_optnumber(L, 11, 1);
     int reflect_count = luaL_optnumber(L, 12, 1);
     int refract_count = luaL_optnumber(L, 13, 1);
-    int glossy_rays = luaL_optnumber(L, 14, 1);
+    int glossy_rays = luaL_optnumber(L, 14, 0);
+    int soft_rays = luaL_optnumber(L, 15, 0);
 
 
 	Image im( width, height);
-	A4_Render(root->node, im, eye, view, up, fov, ambient, lights, num_threads, reflect_count, refract_count, glossy_rays);
+	A4_Render(root->node, im, eye, view, up, fov, ambient, lights, num_threads, reflect_count, refract_count, glossy_rays, soft_rays);
     im.savePng( filename );
 
 	return 0;
@@ -370,7 +374,7 @@ int gr_material_cmd(lua_State* L)
   get_tuple(L, 2, ks, 3);
 
   double shininess = luaL_checknumber(L, 3);
-  double ref_index = luaL_checknumber(L, 4);
+  double ref_index = luaL_optnumber(L, 4, 0.0);
 
   data->material = new PhongMaterial(glm::vec3(kd[0], kd[1], kd[2]),
                                      glm::vec3(ks[0], ks[1], ks[2]),

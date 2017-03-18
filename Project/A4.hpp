@@ -27,5 +27,6 @@ void A4_Render(
         const int num_threads,
         const int reflect_rays,
         const int refract_rays,
-        const int glossy_rays
+        const int glossy_rays,
+        const int soft_rays
 );

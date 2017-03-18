@@ -6,7 +6,9 @@
 
 Light::Light()
   : colour(0.0, 0.0, 0.0),
-    position(0.0, 0.0, 0.0)
+    position(0.0, 0.0, 0.0),
+    width(0.0),
+    height(0.0)
 {
   falloff[0] = 1.0;
   falloff[1] = 0.0;
@@ -16,7 +18,7 @@ Light::Light()
 std::ostream& operator<<(std::ostream& out, const Light& l)
 {
   out << "L[" << glm::to_string(l.colour) 
-  	  << ", " << glm::to_string(l.position) << ", ";
+  	  << ", " << glm::to_string(l.position) << ", " << ", " << l.width << ", " << l.height;
   for (int i = 0; i < 3; i++) {
     if (i > 0) out << ", ";
     out << l.falloff[i];
