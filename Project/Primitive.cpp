@@ -16,6 +16,16 @@ bool Sphere::intersect(const glm::vec3 origin, const glm::vec3 direction, Inters
     return sphere.intersect(origin, direction, inter);
 }
 
+Cone::~Cone()
+{
+}
+
+bool Cone::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersection &inter) const
+{
+    NonhierCone cone(glm::vec3(0.0, 0.0, 0.0), 1.0);
+    return cone.intersect(origin, direction, inter);
+}
+
 Cube::~Cube()
 {
 }
@@ -83,6 +93,15 @@ bool NonhierSphere::intersect(const glm::vec3 origin, const glm::vec3 direction,
         }
     }
     
+    return false;
+}
+
+NonhierCone::~NonhierCone()
+{
+}
+
+bool NonhierCone::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersection &inter) const
+{
     return false;
 }
 
