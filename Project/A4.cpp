@@ -1,6 +1,8 @@
 #include <glm/ext.hpp>
 #include <thread>
 #include <vector>
+#include <random>
+#include <time.h>
 
 #include "GeometryNode.hpp"
 #include "PhongMaterial.hpp"
@@ -226,12 +228,12 @@ Ray get_refracted_ray (Ray incident, Intersection intersection, double index, bo
     // If the normal and the incident ray have a negative dot product, then the ray is entering the primitive
     if (glm::dot(norm_v, normal) < 0) {
         // incident ray entered primitive
-        std::cout << "entering" << std::endl;
+        //std::cout << "entering" << std::endl;
         n_i = 1.0;
         n_t = index;
     } else {
         // incident ray exited primitive
-        std::cout << "exiting" << std::endl;
+        //std::cout << "exiting" << std::endl;
         n_i = index;
         n_t = 1.0;
         
@@ -239,7 +241,7 @@ Ray get_refracted_ray (Ray incident, Intersection intersection, double index, bo
         normal = (-1) * normal;
     }
     n = n_i/n_t;
-    std::cout << "n: " << n << std::endl;
+    //std::cout << "n: " << n << std::endl;
     double vndot = glm::dot(norm_v, normal) < 0;
     double bigugly = 1 - (pow(n, 2) * (1-pow(vndot,2)));
     if (bigugly < 0) {
@@ -253,14 +255,46 @@ Ray get_refracted_ray (Ray incident, Intersection intersection, double index, bo
         totalInternalReflection = false;
         t_origin = intersection.inter_point + (-(1e-2)*normal);
         t_direction = ((-1)*n*vndot - sqrt(bigugly))*normal + (n*norm_v);
-        std::cout << "incident: " << glm::to_string(norm_v) << std::endl;
-        std::cout << "refracted direction: " << glm::to_string(t_direction) << std::endl;
+        //std::cout << "incident: " << glm::to_string(norm_v) << std::endl;
+        //std::cout << "refracted direction: " << glm::to_string(t_direction) << std::endl;
         fresnel = get_fresnel_R(n_i, n_t, vndot, sqrt(bigugly), norm_v, normal);
         return Ray{t_origin, t_direction};
     }
 }
 
-glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & ambient, const std::list<Light *> & lights, int reflect_count, int refract_count){
+Ray get_glossy_ray(Ray og_ray, double shiny){
+    // glossy_ray = OG_ray + i*U + j*V
+    // i,j = -a/2 + rand()*a
+    // a = 1/(1+ks)
+    // U = smallest abs val of OG_ray, setting it to zero, swapping two other values, and negating the first one
+    // V = cross product of OG_ray and normalized U
+
+    glm::vec3 direction = og_ray.direction;
+    glm::vec3 U, V;
+    
+    // Get the basis vectors for the square of size <glossiness>x<glossiness>
+    if(std::abs(direction[2]) > std::abs(direction[0]) && std::abs(direction[2]) > std::abs(direction[1])) {
+        U = glm::vec3(-direction[1], direction[0], 0.0);
+    }
+    else if(std::abs(direction[1]) > std::abs(direction[0])) {
+        U = glm::vec3(-direction[2], 0.0, direction[0]);
+    }
+    else{
+        U = glm::vec3(0.0, -direction[2], direction[1]);
+    }
+    U = glm::normalize(U);
+    V = glm::normalize(glm::cross(direction, U));
+    
+    double a = 1.0 / (1.0 + shiny);
+    
+    double i = -a/2.0 + ((double)rand()/(double)RAND_MAX)*a;
+    double j = -a/2.0 + ((double)rand()/(double)RAND_MAX)*a;
+    
+    glm::vec3 glossy_direction = og_ray.direction + i*U + j*V;
+    return Ray{og_ray.origin, glossy_direction};
+}
+
+glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & ambient, const std::list<Light *> & lights, int reflect_count, int refract_count, int glossy_rays){
     
     Intersection intersection;
     if (find_intersection(r, root, intersection)){
@@ -300,11 +334,40 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
         
         // Define a reflective colour. Black will suffice
         glm::vec3 reflected_colour(0.0, 0.0, 0.0);
+        //std::cout << "reflect count and glossy: " << reflect_count << " " << glossy_rays << std::endl;
         // Check if we have any more reflective rays to send
         if (!material->zero_ks() && reflect_count > 0){
+            
             Ray reflective_ray = {p, r.direction - 2*glm::dot(r.direction, intersection.inter_normal)*intersection.inter_normal};
-            reflected_colour = ray_colour(reflective_ray, reflected_colour, root, ambient, lights, reflect_count - 1, refract_count);
-            //colour_vec = colour_vec + material->get_ks() * reflected_colour;
+            
+            if (glossy_rays > 0){
+                // For each glossy_rays, perturb the ray and send it out to get the colour
+                // Final reflective colour is all the colours summed together and divided by glossy_rays
+                int created_rays = glossy_rays;
+                for (int g=0; g < glossy_rays; g++){
+                    Ray glossy_ray = get_glossy_ray(reflective_ray, material->get_shininess());
+                    //std::cout << "glossy ray: " << glm::to_string(glossy_ray.direction) << std::endl;
+                    //std::cout << "glossy dot: " << glm::dot(glossy_ray.direction, intersection.inter_normal) << std::endl;
+                    if (glm::dot(glossy_ray.direction, intersection.inter_normal) > 0){
+                        reflected_colour = reflected_colour + ray_colour(glossy_ray, reflected_colour, root, ambient, lights, reflect_count - 1, refract_count, glossy_rays);
+                    } else{
+                        // Ray went below surface - so dont count it in average
+                        if (created_rays > 0){
+                            created_rays -- ;
+                        }
+                    }
+                    
+                }
+                
+                if (reflected_colour != glm::vec3(0.0, 0.0, 0.0)){
+                    //std::cout << "glossy: " << created_rays << std::endl;
+                    //std::cout << "reflected colour glossy: " << glm::to_string(reflected_colour) << std::endl;
+                }
+                
+                reflected_colour = reflected_colour * (1.0 / created_rays);
+            } else {
+                reflected_colour = ray_colour(reflective_ray, reflected_colour, root, ambient, lights, reflect_count - 1, refract_count, glossy_rays);
+            }
         }
         
         double fresnel_R = 1.0;
@@ -347,9 +410,9 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
             bool totalInternalReflection = false;
             Ray refractive_ray = get_refracted_ray(r, intersection, material->get_index(), totalInternalReflection, fresnel_R);
             if (!totalInternalReflection) {
-                refracted_colour = ray_colour(refractive_ray, refracted_colour, root, ambient, lights, reflect_count, reflect_count - 1);
+                refracted_colour = ray_colour(refractive_ray, refracted_colour, root, ambient, lights, reflect_count, reflect_count - 1, glossy_rays);
                 //colour_vec = colour_vec + refracted_colour;
-                std::cout << "fresnel: " << fresnel_R << std::endl;
+                //std::cout << "fresnel: " << fresnel_R << std::endl;
             }
         }
         
@@ -368,11 +431,13 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
     return bg;
 }
 
-void thread_render(SceneNode *root, Image & image, const glm::vec3 & eye, const glm::vec3 & view, const glm::vec3 & up, double fovy, const glm::vec3 & ambient, const std::list<Light *> & lights, glm::mat4 pixel_to_world, int start_x, int end_x, int start_y, int end_y, int thread_num, int y_skip) {
+void thread_render(SceneNode *root, Image & image, const glm::vec3 & eye, const glm::vec3 & view, const glm::vec3 & up, double fovy, const glm::vec3 & ambient, const std::list<Light *> & lights, glm::mat4 pixel_to_world, int start_x, int end_x, int start_y, int end_y, int thread_num, int y_skip, int reflect_count, int refract_count, int glossy_rays) {
     
     int total_pixels = image.width() * image.height()/y_skip;
     int current_pixel = 1;
     int current_percent = 0;
+    
+    srand((unsigned int)time(NULL));
     
     for (int y = start_y; y < end_y; y += y_skip) {
         for (int x = start_x; x < end_x; x++) {
@@ -390,6 +455,40 @@ void thread_render(SceneNode *root, Image & image, const glm::vec3 & eye, const 
             
             glm::vec3 background_col = glm::vec3(0.0, 0.0, 0.0);
             
+#ifdef SUPERSAMPLE
+            
+            // Super sampling - sample four corners of pixel instead of just top left corner
+            glm::vec4 pixel_tl = glm::vec4(x+0.25, y+0.25, 0.0, 1.0);
+            glm::vec4 pixel_tr = glm::vec4(x+0.75, y+0.25, 0.0, 1.0);
+            glm::vec4 pixel_bl = glm::vec4(x+0.25, y+0.75, 0.0, 1.0);
+            glm::vec4 pixel_br = glm::vec4(x+0.75, y+0.75, 0.0, 1.0);
+            
+            // Get pixels in world coords
+            glm::vec3 p_tl = glm::vec3(pixel_to_world * pixel_tl);
+            glm::vec3 p_tr = glm::vec3(pixel_to_world * pixel_tr);
+            glm::vec3 p_bl = glm::vec3(pixel_to_world * pixel_bl);
+            glm::vec3 p_br = glm::vec3(pixel_to_world * pixel_br);
+            
+            // Create four rays
+            Ray ray_tl = {eye, glm::normalize(p_tl - eye)};
+            Ray ray_tr = {eye, glm::normalize(p_tr - eye)};
+            Ray ray_bl = {eye, glm::normalize(p_bl - eye)};
+            Ray ray_br = {eye, glm::normalize(p_br - eye)};
+            
+            // Get 4 colours
+            glm::vec3 colour_tl = ray_colour(ray_tl, background_col, root, ambient, lights, reflect_count, refract_count, glossy_rays);
+            glm::vec3 colour_tr = ray_colour(ray_tr, background_col, root, ambient, lights, reflect_count, refract_count, glossy_rays);
+            glm::vec3 colour_bl = ray_colour(ray_bl, background_col, root, ambient, lights, reflect_count, refract_count, glossy_rays);
+            glm::vec3 colour_br = ray_colour(ray_br, background_col, root, ambient, lights, reflect_count, refract_count, glossy_rays);
+            
+            image(x, y, 0) = (colour_tl[0] + colour_tr[0] + colour_bl[0] + colour_br[0]) / 4.0f;
+            image(x, y, 1) = (colour_tl[1] + colour_tr[1] + colour_bl[1] + colour_br[1]) / 4.0f;
+            image(x, y, 2) = (colour_tl[2] + colour_tr[2] + colour_bl[2] + colour_br[2]) / 4.0f;
+            
+            current_pixel++;
+            
+#else
+            
             // Pixel to World Coords
             glm::vec4 pixel = glm::vec4(x, y, 0.0, 1.0);
             glm::vec3 p = glm::vec3(pixel_to_world * pixel);
@@ -403,7 +502,7 @@ void thread_render(SceneNode *root, Image & image, const glm::vec3 & eye, const 
             Ray ray = {eye, glm::normalize(p - eye)};
             
             // Cast ray into the scene and get the colour returned
-            glm::vec3 colour = ray_colour(ray, background_col, root, ambient, lights, 5, 5);
+            glm::vec3 colour = ray_colour(ray, background_col, root, ambient, lights, reflect_count, refract_count, glossy_rays);
             
             if (colour != background_col){
                 //exit(1);
@@ -414,6 +513,8 @@ void thread_render(SceneNode *root, Image & image, const glm::vec3 & eye, const 
             image(x, y, 2) = colour[2];
             
             current_pixel++;
+            
+#endif
         }
     }
 }
@@ -438,7 +539,13 @@ void A4_Render(
 
 		// Lighting parameters
 		const glm::vec3 & ambient,
-		const std::list<Light *> & lights
+		const std::list<Light *> & lights,
+               
+        // Ray count params
+        const int num_threads,
+        const int reflect_rays,
+        const int refract_rays,
+        const int glossy_rays
 ) {
 
   // Fill in raytracing code here...
@@ -462,14 +569,11 @@ void A4_Render(
     glm::mat4 pixel_to_world = world_pixels(image.width(), image.height(), eye, fovy, view, up);
     
     std::cout << glm::to_string(pixel_to_world) << std::endl;
-
-    // x is width, y is height
-    int num_threads = 1;
     
     std::vector<std::thread> threads(num_threads);
     for(int i = 0; i < num_threads; i++)
     {
-        threads[i] = std::thread(thread_render, root, std::ref(image), eye, view, up, fovy, ambient, lights, pixel_to_world, 0, image.width(), i, image.height(), i, num_threads);
+        threads[i] = std::thread(thread_render, root, std::ref(image), eye, view, up, fovy, ambient, lights, pixel_to_world, 0, image.width(), i, image.height(), i, num_threads, reflect_rays, refract_rays, glossy_rays);
         //threads[i] = std::thread(test_func, root, std::ref(image));
         if(threads[i].get_id() == std::thread::id())
         {

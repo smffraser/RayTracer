@@ -342,9 +342,15 @@ int gr_render_cmd(lua_State* L)
     lights.push_back(ldata->light);
     lua_pop(L, 1);
   }
+    
+    int num_threads = luaL_optnumber(L, 11, 1);
+    int reflect_count = luaL_optnumber(L, 12, 1);
+    int refract_count = luaL_optnumber(L, 13, 1);
+    int glossy_rays = luaL_optnumber(L, 14, 1);
+
 
 	Image im( width, height);
-	A4_Render(root->node, im, eye, view, up, fov, ambient, lights);
+	A4_Render(root->node, im, eye, view, up, fov, ambient, lights, num_threads, reflect_count, refract_count, glossy_rays);
     im.savePng( filename );
 
 	return 0;

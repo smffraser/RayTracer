@@ -21,5 +21,11 @@ void A4_Render(
 
 		// Lighting parameters
 		const glm::vec3 & ambient,
-		const std::list<Light *> & lights
+		const std::list<Light *> & lights,
+               
+        // Ray parameters
+        const int num_threads,
+        const int reflect_rays,
+        const int refract_rays,
+        const int glossy_rays
 );
