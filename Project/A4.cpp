@@ -45,8 +45,6 @@ bool find_intersection(Ray r, SceneNode* node, Intersection &inter){
         // Determine if there is an intersection with this geonode...
         GeometryNode *gnode = static_cast<GeometryNode*>(node);
         
-        std::cout << "node name: " << node->m_name << std::endl;
-        
         intersection_result = gnode->m_primitive->intersect(r.origin, r.direction, inter);
         if (intersection_result){
             name = node->m_name;

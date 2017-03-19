@@ -102,6 +102,123 @@ NonhierCone::~NonhierCone()
 
 bool NonhierCone::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersection &inter) const
 {
+    double roots[2];
+    glm::vec3 o = origin;
+    glm::vec3 d = direction;
+    
+    // Formula for an infinite cone is X^2 + Y^2 = Z^2
+    // solve for t = (-B +- sqrt(B^2 - 4AC))/(2A)
+    // A = d.x^2 + d.y^2 - d.z^2
+    // B = 2*d.x*o.x + 2*d.y*o.y - 2*d.z*o.z
+    // C = o.x^2 + o.y^2 - o.z^2
+    // where o = origin of the ray
+    //       d = direction - origin
+    
+    double A = pow(d.x, 2) + pow(d.y, 2) - pow(d.z, 2);
+    double B = 2.0*d.x*o.x + 2.0*d.y*o.y - 2.0*d.z*o.z;
+    double C = pow(o.x, 2) + pow(o.y, 2) - pow(o.z, 2);
+    
+    //std::cout << "A: " << A << " B: " << B << " C: " << C << std::endl;
+    
+    // Get t
+    size_t num_roots = quadraticRoots(A, B, C, roots);
+    // Bound the cone
+    double zmax = 0.0;
+    double zmin = -m_radius;
+    
+    //std::cout << "Num roots: " << num_roots << std::endl;
+    
+    // If roots == 0, we missed the cone curve and there are no intersections
+    // If roots == 1, the line is tangent to the cone curve and thus just hits it
+    // If roots == 2, the line goes through the cone curve twice
+    //   -> take the smaller of the roots (t) because we only want the front part where the ray hits not the back
+    
+    if (num_roots == 1){
+        // Check to make sure ray is tangent to a part of the finite cone
+        double z = o.z + roots[0]*d.z;
+        if (zmin <= z && z <= zmax){
+            // Check if t > 0 (ie make sure in front of eye)
+            if (roots[0] > 0) {
+                inter.inter_point = o + (float)roots[0]*d;
+                inter.inter_normal = glm::normalize(inter.inter_point - m_pos);
+                std::cout << "INTERSECTION CONE!! tangent" << std::endl;
+                return true;
+            }
+        }
+        
+    } else if (num_roots == 2){
+    
+        double z0 = o.z + (double)roots[0]*d.z;
+        double z1 = o.z + (double)roots[1]*d.z;
+        
+        bool z0_in = zmin <= z0 && z0 <= zmax;
+        bool z1_in = zmin <= z1 && z1 <= zmax;
+        double tmin = -1;
+        double other = -1;
+        
+        // If both z values are within the z_bounds, then ray intersects the curve of the cone twice
+        // Thus choose the smaller of the two t's
+        if (z0_in && z1_in){
+            // Find the smaller t
+            tmin = roots[0] < roots[1] ? roots[0] : roots[1];
+            other = tmin == roots[0] ? roots[1] : roots[0];
+        } else if (z0_in || z1_in){
+            std::cout << "The face should be showing" << std::endl;
+            std::cout << "t1: " << roots[0] << " t2: " << roots[1] << std::endl;
+            std::cout << "z0: " << z0 << " z1: " << z1 << std::endl;
+            std::cout << "zmin: " << zmin << " zmax: " << zmax << std::endl;
+            
+            double z_min = z0 < z1 ? z0 : z1 ;
+            double z_max = z_min == z0 ? z1 : z0 ;
+            
+            // If one z value is in the bounds and the other out, then ray goes through the face
+            // Goes through face if ...
+            // zmax is larger than zmax and zmin less than zmax but larger than zmin
+            // zmin is smaller than zmin and zmax is larger than zmin but smaller than zmax
+            
+            if ((z_max > zmax && z_min <= zmax && z_min >= zmin)||
+                (z_min < zmin && z_max >= zmin && z_max <= zmax)) {
+                
+                std::cout << "Goes through face! z0: " << z0 << " z1: " << z1 << " zmin: " << zmin << " zmax: " << zmax << std::endl;
+                
+                // Get t value for part of the ray that goes through the face
+                double t3 = (1.0 - o.z)/d.z;
+                
+                // Find the min t (the t with the smallest value)
+                if (z0_in){
+                    tmin = roots[0] < t3 ? roots[0] : t3 ;
+                    other = tmin == roots[0] ? t3 : roots[0];
+                    
+                } else {
+                    tmin = roots[1] < t3 ? roots[1] : t3 ;
+                    other = tmin == roots[1] ? t3 : roots[1];
+                }
+            } else {
+                // THIS CASE SHOULD NEVER HAPPEN
+                return false;
+            }
+        } else {
+            // This means the ray doesn't intersect the finite cone anywhere
+            return false ;
+        }
+        
+        // Check to see if eye in INSIDE the cone
+        if (tmin < 0 && other > 0){
+            inter.inter_point = o + (float)other*d;
+            inter.inter_normal = glm::normalize(inter.inter_point - m_pos);
+            //std::cout << "INTERSECTION CONE!! inside cone" << std::endl;
+            return true;
+        }
+        
+        // Make sure that tmin is still in view of the eye
+        if (tmin > 0){
+            inter.inter_point = o + (float)tmin*d;
+            inter.inter_normal = glm::normalize(inter.inter_point - m_pos);
+            //std::cout << "INTERSECTION CONE!! outside cone" << std::endl;
+            return true;
+        }
+    }
+    
     return false;
 }
 
