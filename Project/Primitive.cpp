@@ -110,6 +110,204 @@ NonhierCone::~NonhierCone()
 }
 
 bool NonhierCylinder::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersection &inter) const{
+    
+    // There are two intersections we need to check:
+    // 1) with the curve of the cylinder
+    // 2) with the face of the cylinder
+    
+    // Start with the curve of the cylinder
+    
+    double roots[2];
+    glm::vec3 o = origin;
+    glm::vec3 d = direction;
+    
+    // Formula for an infinite cylinder is X^2 + Y^2 = R^2
+    // Note: This is NOT the same as cone - this has a radius whereas cone radius is
+    // determined by the height
+    // A = d.x^2 + d.y^2
+    // B = o.x*d.x + o.y*d.y
+    // C = o.x^2 + a.y^2 - R^2
+    
+    double A = pow(d.x, 2) + pow(d.y, 2);
+    double B = 2.0*o.x*d.x + 2.0*o.y*d.y ;
+    double C = pow(o.x, 2) + pow(o.y, 2) - pow(m_radius, 2);
+    
+    // Get t
+    size_t num_roots = quadraticRoots(A, B, C, roots);
+    // Bound the cylinder
+    double zmax = m_height / 2.0;
+    double zmin = -zmax;
+    
+    // If no roots, then no intersection with the curve
+    // THIS DOES NOT MEAN THERE IS NO INTERSECTION!
+    // If one root, intersection is tangent to the cylinder curve
+    // If two roots, goes in and out of the curve
+    
+    if (num_roots == 1){
+        // Tangent
+        // Check to make sure ray is tangent to a part of the finite cylidner
+        double z = o.z + roots[0]*d.z;
+        if (zmin <= z && z <= zmax){
+            // Check if t > 0 (ie make sure in front of eye)
+            if (roots[0] > 0) {
+                inter.inter_point = o + (float)roots[0]*d;
+                inter.inter_normal = glm::normalize(inter.inter_point - m_pos);
+                std::cout << "INTERSECTION CYLINDER!! tangent" << std::endl;
+                return true;
+            }
+        }
+    }
+    
+    if (num_roots == 2){
+        double z0 = o.z + roots[0]*d.z ;
+        double z1 = o.z + roots[1]*d.z ;
+        double zs_min = z0 < z1 ? z0 : z1;
+        double zs_max = zs_min == z0 ? z1 : z0 ;
+        
+        bool z0_in = (zmin <= z0 && z0 <= zmax);
+        bool z1_in = (zmin <= z1 && z1 <= zmax);
+        double tmin = -INFINITY;
+        double other= INFINITY;
+        glm::vec3 face_norm = glm::vec3(0.0, 0.0, 0.0);
+        glm::vec3 face_norm_other = glm::vec3(0.0, 0.0, 0.0);
+        bool n_min = false ;
+        bool n_other = false;
+        
+        if (zs_min < zmin && zs_max > zmax) {
+            //std::cout << "z0: " << z0 << " z1: " << z1 << std::endl;
+            // Neither are in the cylinder, which means the line goes through the two faces
+            float t_min_face = (zmin - o.z) / d.z ;
+            float t_max_face = (zmax - o.z) / d.z ;
+            
+            if (t_min_face < t_max_face){
+                tmin = t_min_face;
+                other = t_max_face;
+                face_norm.z = -zmin;
+                face_norm_other.z = zmin;
+            } else {
+                tmin = t_max_face;
+                other = t_min_face;
+                face_norm.z = zmax;
+                face_norm_other.z = -zmax;
+            }
+            
+            //std::cout << "tmin: " << tmin << " other: " << other << std::endl;
+            
+            // Check to see if eye in INSIDE the cone
+            if (tmin < 0 && other > 0){
+                inter.inter_point = o + (float)other*d;
+                inter.inter_normal = glm::normalize(face_norm_other);
+                //std::cout << "INTERSECTION CYLINDER!! inside cylinder" << std::endl;
+                //return true;
+            }else if (tmin > 0){
+                inter.inter_point = o + (float)tmin*d;
+                inter.inter_normal = glm::normalize(face_norm);
+                //std::cout << "INTERSECTION CYLINDER!! outside cylinder" << std::endl;
+                return true;
+            } else {
+                //std::cout << "INTERSECTION CYLINDER!! both outside cylinder" << std::endl;
+                return false;
+            }
+            
+        } else if (z0_in && z1_in){
+            // Line goes through the curve in and out
+            // Find the smaller t
+            tmin = roots[0] < roots[1] ? roots[0] : roots[1];
+            other = tmin == roots[0] ? roots[1] : roots[0];
+        } else if (z0_in || z1_in){
+            // Line goes through the curve and the face of the cylinder
+            // Check if line goes through min face
+            double t3 = INFINITY;
+            if (zs_min < zmin && zs_max >= zmin && zs_max <= zmax){
+                t3 = (zmin - o.z) / d.z;
+                face_norm.z = -1.0;
+            }
+            // Check if line goes through max face
+            if (zs_max > zmax && zs_min <= zmax && zs_min >= zmin){
+                t3 = (zmax - o.z) / d.z ;
+                face_norm.z = 1.0;
+            }
+            
+            if (z0_in){
+                if (roots[0] < t3) {
+                    tmin = roots[0];
+                    other = t3 ;
+                    n_other = true;
+                } else {
+                    tmin = t3;
+                    other = roots[0] ;
+                    n_min = true;
+                }
+            } else {
+                if (roots[1] < t3) {
+                    tmin = roots[1];
+                    other = t3 ;
+                    n_other = true;
+                } else {
+                    tmin = t3;
+                    other = roots[1] ;
+                    n_min = true;
+                }
+            }
+        } else {
+            return false;
+        }
+        // Check to see if eye in INSIDE the cone
+        if (tmin < 0 && other > 0){
+            inter.inter_point = o + (float)other*d;
+            if (n_other) {
+                inter.inter_normal = glm::normalize(face_norm);
+            } else {
+                inter.inter_normal = glm::normalize(inter.inter_point);
+            }
+            //std::cout << "INTERSECTION CYLINDER!! inside cylinder" << std::endl;
+            return true;
+        }
+        
+        // Make sure that tmin is still in view of the eye
+        if (tmin > 0){
+            inter.inter_point = o + (float)tmin*d;
+            if (n_min) {
+                inter.inter_normal = glm::normalize(face_norm);
+            } else {
+                inter.inter_normal = glm::normalize(inter.inter_point);
+            }
+            //std::cout << "INTERSECTION CYLINDER!! outside cylinder" << std::endl;
+            return true;
+        }
+    }
+    
+    // Now, need to check if ray hit the faces instead of the cylinder curve
+    float t4 = (zmin - o.z) / d.z ;
+    float t5 = (zmax - o.z) / d.z ;
+    
+    // Check that t4 and t5 are within the circle of the cylinder face
+    bool t4_result = pow(o.x + t4*d.x, 2) + pow(o.y + t4*d.y, 2) <= pow(m_radius, 2);
+    bool t5_result = pow(o.x + t5*d.x, 2) + pow(o.y + t5*d.y, 2) <= pow(m_radius, 2);
+    
+    if (t4_result && t5_result){
+        float tmin = t4 < t5 ? t4 : t5 ;
+        float other = t4 == tmin ? t5 : t4 ;
+        std::cout << "tmin: " << tmin << " other: " << other << std::endl;
+        glm::vec3 norm = glm::vec3(0.0, 0.0, 0.0);
+        glm::vec3 other_norm = glm::vec3(0.0, 0.0, 0.0);
+        norm.z = t4 < t5 ? -1.0 : 1.0;
+        other_norm.z = t4 < t5 ? 1.0 : -1.0;
+        
+        // Check if inside
+        if (tmin < 0 && other > 0){
+            inter.inter_point = o + other*d;
+            inter.inter_normal = glm::normalize(other_norm);
+        } else if (tmin > 0){
+            inter.inter_point = o + tmin*d;
+            inter.inter_normal = glm::normalize(norm);
+        } else {
+            return false;
+        }
+        std::cout << "INTERSECTION CYLINDER!! completely cylinder" << std::endl;
+        return true;
+    }
+    
     return false ;
 }
 
@@ -158,7 +356,7 @@ bool NonhierCone::intersect(const glm::vec3 origin, const glm::vec3 direction, I
             if (roots[0] > 0) {
                 inter.inter_point = o + (float)roots[0]*d;
                 inter.inter_normal = glm::normalize(inter.inter_point - m_pos);
-                std::cout << "INTERSECTION CONE!! tangent" << std::endl;
+                //std::cout << "INTERSECTION CONE!! tangent" << std::endl;
                 return true;
             }
         }
@@ -172,6 +370,8 @@ bool NonhierCone::intersect(const glm::vec3 origin, const glm::vec3 direction, I
         bool z1_in = zmin <= z1 && z1 <= zmax;
         double tmin = -1;
         double other = -1;
+        bool face_intersected = false;
+        bool face_back_inter = false;
         
         // If both z values are within the z_bounds, then ray intersects the curve of the cone twice
         // Thus choose the smaller of the two t's
@@ -180,10 +380,10 @@ bool NonhierCone::intersect(const glm::vec3 origin, const glm::vec3 direction, I
             tmin = roots[0] < roots[1] ? roots[0] : roots[1];
             other = tmin == roots[0] ? roots[1] : roots[0];
         } else if (z0_in || z1_in){
-            std::cout << "The face should be showing" << std::endl;
-            std::cout << "t1: " << roots[0] << " t2: " << roots[1] << std::endl;
-            std::cout << "z0: " << z0 << " z1: " << z1 << std::endl;
-            std::cout << "zmin: " << zmin << " zmax: " << zmax << std::endl;
+            //std::cout << "The face should be showing" << std::endl;
+            //std::cout << "t1: " << roots[0] << " t2: " << roots[1] << std::endl;
+            //std::cout << "z0: " << z0 << " z1: " << z1 << std::endl;
+            //std::cout << "zmin: " << zmin << " zmax: " << zmax << std::endl;
             
             double z_min = z0 < z1 ? z0 : z1 ;
             double z_max = z_min == z0 ? z1 : z0 ;
@@ -196,10 +396,10 @@ bool NonhierCone::intersect(const glm::vec3 origin, const glm::vec3 direction, I
             if ((z_max > zmax && z_min <= zmax && z_min >= zmin)||
                 (z_min < zmin && z_max >= zmin && z_max <= zmax)) {
                 
-                std::cout << "Goes through face! z0: " << z0 << " z1: " << z1 << " zmin: " << zmin << " zmax: " << zmax << std::endl;
+                //std::cout << "Goes through face! z0: " << z0 << " z1: " << z1 << " zmin: " << zmin << " zmax: " << zmax << std::endl;
                 
                 // Get t value for part of the ray that goes through the face
-                double t3 = (1.0 - o.z)/d.z;
+                double t3 = (zmin - o.z)/d.z;
                 
                 // Find the min t (the t with the smallest value)
                 if (z0_in){
@@ -209,6 +409,12 @@ bool NonhierCone::intersect(const glm::vec3 origin, const glm::vec3 direction, I
                 } else {
                     tmin = roots[1] < t3 ? roots[1] : t3 ;
                     other = tmin == roots[1] ? t3 : roots[1];
+                }
+                
+                if (tmin == t3) {
+                    face_intersected = true;
+                } else {
+                    face_back_inter = true;
                 }
             } else {
                 // THIS CASE SHOULD NEVER HAPPEN
@@ -222,7 +428,11 @@ bool NonhierCone::intersect(const glm::vec3 origin, const glm::vec3 direction, I
         // Check to see if eye in INSIDE the cone
         if (tmin < 0 && other > 0){
             inter.inter_point = o + (float)other*d;
-            inter.inter_normal = glm::normalize(inter.inter_point - m_pos);
+            if (face_back_inter){
+                inter.inter_normal = glm::normalize(glm::vec3(0.0, 0.0, -zmin));
+            } else {
+                inter.inter_normal = glm::normalize(glm::vec3(2.0*o.x, 2.0*o.y, 2*o.z));
+            }
             //std::cout << "INTERSECTION CONE!! inside cone" << std::endl;
             return true;
         }
@@ -230,7 +440,11 @@ bool NonhierCone::intersect(const glm::vec3 origin, const glm::vec3 direction, I
         // Make sure that tmin is still in view of the eye
         if (tmin > 0){
             inter.inter_point = o + (float)tmin*d;
-            inter.inter_normal = glm::normalize(inter.inter_point - m_pos);
+            if (face_intersected){
+                inter.inter_normal = glm::normalize(glm::vec3(0.0, 0.0, zmin));
+            } else {
+                inter.inter_normal = glm::normalize(glm::vec3(2.0*o.x, 2.0*o.y, -2*o.z));
+            }
             //std::cout << "INTERSECTION CONE!! outside cone" << std::endl;
             return true;
         }
