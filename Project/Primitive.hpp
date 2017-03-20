@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <iostream>
+#include <math.h>
 #include "Helpers.hpp"
 
 class Primitive {
@@ -76,14 +77,14 @@ private:
 
 class NonhierCone : public Primitive {
 public:
-    NonhierCone(const glm::vec3& pos, double radius): m_pos(pos), m_radius(radius){}
+    NonhierCone(const glm::vec3& pos, double height): m_pos(pos), m_height(height){}
     virtual ~NonhierCone();
     
     virtual bool intersect(const glm::vec3 origin, const glm::vec3 direction, Intersection &inter) const;
     
 private:
     glm::vec3 m_pos;
-    double m_radius;
+    double m_height;
 };
 
 class NonhierBox : public Primitive {

@@ -302,10 +302,6 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
     Intersection intersection;
     if (find_intersection(r, root, intersection)){
         
-        if (refract_count < 4){
-        //    std::cout << "refract hit something past itself" << std::endl;
-        }
-        
         const PhongMaterial* material = dynamic_cast<const PhongMaterial*>(intersection.material);
         // Material does not emit light in this assignment so no ke
         glm::vec3 colour_vec = material->get_kd() * ambient;
@@ -449,12 +445,16 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
              */
          
             bool totalInternalReflection = false;
+            //std::cout << "TEST" << std::endl;
             Ray refractive_ray = get_refracted_ray(r, intersection, material->get_index(), totalInternalReflection, fresnel_R);
+            //std::cout << "after: " << totalInternalReflection << std::endl;
             if (!totalInternalReflection) {
-                refracted_colour = ray_colour(refractive_ray, refracted_colour, root, ambient, lights, reflect_count, reflect_count - 1, glossy_rays, soft_rays);
+                //std::cout << "not it" << std::endl;
+                refracted_colour = ray_colour(refractive_ray, refracted_colour, root, ambient, lights, reflect_count, refract_count - 1, glossy_rays, soft_rays);
                 //colour_vec = colour_vec + refracted_colour;
                 //std::cout << "fresnel: " << fresnel_R << std::endl;
             }
+            //std::cout << "not it2" << std::endl;
         }
         
         // Add the reflection and refraction colour components, scaling them by the Fresnel coefficient
