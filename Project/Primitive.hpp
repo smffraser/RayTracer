@@ -49,6 +49,14 @@ public:
     
 };
 
+class Plane : public Primitive {
+public:
+    virtual ~Plane();
+    
+    virtual bool intersect(const glm::vec3 origin, const glm::vec3 direction, Intersection &inter) const;
+    
+};
+
 
 class NonhierSphere : public Primitive {
 public:

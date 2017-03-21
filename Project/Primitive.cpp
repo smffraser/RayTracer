@@ -45,6 +45,52 @@ bool Cube::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersec
     return box.intersect(origin, direction, inter);
 }
 
+Plane::~Plane()
+{
+}
+
+bool Plane::intersect(const glm::vec3 origin, const glm::vec3 direction, Intersection &inter) const
+{
+    // This is a unit plane so position is centered at the origin and the size is 1.0-by-1.0 on the z-axis
+    glm::vec3 pos = glm::vec3(0.0, 0.0, 0.0);
+    double plane_size = 1.0/2.0 ;
+    
+    glm::vec3 normal = glm::vec3(0.0, 0.0, 1.0);
+    
+    // Check to see if line intersects with the infinite z-plane
+    // First, make sure denominator isnt zero (or at least close to zero for floating point)
+    double denominator = glm::dot(normal, direction);
+    if (std::abs(denominator) < (1e-5)) return false;
+    
+    // Solve for t
+    // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-plane-and-ray-disk-intersection
+    double t = glm::dot(normal,(pos - origin)) / denominator;
+    
+    // Make sure point of intersection is in front of eye
+    if (t > 0){
+
+        // Check to see if point of intersection is within the bounded unit plane
+        glm::vec3 possible_intersection = origin + (float)t*direction ;
+        
+        // Outside of the bounded x value
+        if ((possible_intersection.x < pos.x-plane_size) ||
+            (possible_intersection.x > pos.x+plane_size)){
+            return false ;
+        } else if ((possible_intersection.y < pos.y-plane_size) ||
+                   (possible_intersection.y > pos.y+plane_size))
+        {
+            // Outside of the bounded y value
+            return false ;
+        } else {
+            // Both x and y are inside the bounds
+            inter.inter_point = possible_intersection;
+            inter.inter_normal = glm::normalize(normal);
+            return true;
+        }
+    }
+    return false ;
+}
+
 NonhierSphere::~NonhierSphere()
 {
 }
