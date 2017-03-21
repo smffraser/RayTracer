@@ -178,8 +178,7 @@ bool NonhierCylinder::intersect(const glm::vec3 origin, const glm::vec3 directio
         bool z1_in = (zmin <= z1 && z1 <= zmax);
         double tmin = -INFINITY;
         double other= INFINITY;
-        glm::vec3 face_norm = glm::vec3(0.0, 0.0, 0.0);
-        glm::vec3 face_norm_other = glm::vec3(0.0, 0.0, 0.0);
+        glm::vec3 face_norm = glm::vec3(0.0, 0.0, 1.0);
         bool n_min = false ;
         bool n_other = false;
         
@@ -197,13 +196,9 @@ bool NonhierCylinder::intersect(const glm::vec3 origin, const glm::vec3 directio
             if (t_min_face < t_max_face){
                 tmin = t_min_face;
                 other = t_max_face;
-                face_norm.z = -zmin;
-                face_norm_other.z = -zmax;
             } else {
                 tmin = t_max_face;
                 other = t_min_face;
-                face_norm.z = zmax;
-                face_norm_other.z = zmin;
             }
             
             //std::cout << "tmin: " << tmin << " other: " << other << std::endl;
@@ -211,7 +206,7 @@ bool NonhierCylinder::intersect(const glm::vec3 origin, const glm::vec3 directio
             // Check to see if eye in INSIDE the cone
             if (tmin < 0 && other > 0){
                 inter.inter_point = o + (float)other*d;
-                inter.inter_normal = glm::normalize(face_norm_other);
+                inter.inter_normal = glm::normalize(face_norm);
                 //std::cout << "INTERSECTION CYLINDER!! inside cylinder" << std::endl;
                 //return true;
             }else if (tmin > 0){
@@ -238,12 +233,10 @@ bool NonhierCylinder::intersect(const glm::vec3 origin, const glm::vec3 directio
             double t3 = INFINITY;
             if (zs_min < zmin && zs_max >= zmin && zs_max <= zmax){
                 t3 = (zmin - o.z) / d.z;
-                face_norm.z = -zmin;
             }
             // Check if line goes through max face
             if (zs_max > zmax && zs_min <= zmax && zs_min >= zmin){
                 t3 = (zmax - o.z) / d.z ;
-                face_norm.z = zmax;
             }
             
             // If z0 is in the curve, then z1 is on the face
@@ -278,9 +271,9 @@ bool NonhierCylinder::intersect(const glm::vec3 origin, const glm::vec3 directio
         if (tmin < 0 && other > 0){
             inter.inter_point = o + (float)other*d;
             if (n_other) {
-                inter.inter_normal = glm::normalize(-face_norm);
+                inter.inter_normal = glm::normalize(face_norm);
             } else {
-                inter.inter_normal = glm::normalize(glm::vec3(inter.inter_point.x, inter.inter_point.y, 0));;
+                inter.inter_normal = glm::normalize(glm::vec3(inter.inter_point.x, inter.inter_point.y, 0));
             }
             //std::cout << "INTERSECTION CYLINDER!! inside cylinder" << std::endl;
             return true;
@@ -292,7 +285,7 @@ bool NonhierCylinder::intersect(const glm::vec3 origin, const glm::vec3 directio
             if (n_min) {
                 inter.inter_normal = glm::normalize(face_norm);
             } else {
-                inter.inter_normal = glm::normalize(glm::vec3(inter.inter_point.x, inter.inter_point.y, 0));;
+                inter.inter_normal = glm::normalize(glm::vec3(inter.inter_point.x, inter.inter_point.y, 0));
             }
             //std::cout << "INTERSECTION CYLINDER!! outside cylinder" << std::endl;
             return true;
@@ -313,15 +306,12 @@ bool NonhierCylinder::intersect(const glm::vec3 origin, const glm::vec3 directio
         float tmin = t4 < t5 ? t4 : t5 ;
         float other = t4 == tmin ? t5 : t4 ;
         std::cout << "tmin: " << tmin << " other: " << other << std::endl;
-        glm::vec3 norm = glm::vec3(0.0, 0.0, 0.0);
-        glm::vec3 other_norm = glm::vec3(0.0, 0.0, 0.0);
-        norm.z = t4 < t5 ? -1.0 : 1.0;
-        other_norm.z = t4 < t5 ? 1.0 : -1.0;
+        glm::vec3 norm = glm::vec3(0.0, 0.0, 1.0);
         
         // Check if inside
         if (tmin < 0 && other > 0){
             inter.inter_point = o + other*d;
-            inter.inter_normal = glm::normalize(other_norm);
+            inter.inter_normal = glm::normalize(norm);
         } else if (tmin > 0){
             inter.inter_point = o + tmin*d;
             inter.inter_normal = glm::normalize(norm);
@@ -466,13 +456,13 @@ bool NonhierCone::intersect(const glm::vec3 origin, const glm::vec3 direction, I
             
             inter.inter_point = o + (float)other*d;
             if (face_back_inter){
-                inter.inter_normal = glm::normalize(glm::vec3(0.0, 0.0, -zmin));
+                inter.inter_normal = glm::normalize(glm::vec3(0.0, 0.0, zmin));
             } else {
                 // Radius for the current spot
                 double mag = sqrt(std::pow(inter.inter_point.x, 2) + pow(inter.inter_point.y, 2));
                 double x = inter.inter_point.x / mag ;
                 double y = inter.inter_point.y / mag ;
-                inter.inter_normal = glm::normalize(glm::vec3(x, y, -1.0));
+                inter.inter_normal = glm::normalize(glm::vec3(x, y, 1.0));
             }
             //std::cout << "INTERSECTION CONE!! inside cone" << std::endl;
             return true;
@@ -553,6 +543,8 @@ bool NonhierBox::intersect(const glm::vec3 origin, const glm::vec3 direction, In
         min_normal = glm::vec3(1.0, 0.0, 0.0);
         max_normal = glm::vec3(1.0, 0.0, 0.0);
     } else {
+        //min_normal = glm::vec3(-1.0, 0.0, 0.0);
+        //max_normal = glm::vec3(-1.0, 0.0, 0.0);
         min_normal = glm::vec3(-1.0, 0.0, 0.0);
         max_normal = glm::vec3(-1.0, 0.0, 0.0);
     }
@@ -570,7 +562,8 @@ bool NonhierBox::intersect(const glm::vec3 origin, const glm::vec3 direction, In
         if (direction.y < 0.0){
             min_normal = glm::vec3(0.0, 1.0, 0.0);
         } else {
-            min_normal = glm::vec3(0.0, -1.0, 0.0);
+            //min_normal = glm::vec3(0.0, -1.0, 0.0);
+            min_normal = glm::vec3(0.0, 1.0, 0.0);
         }
     }
     
@@ -580,7 +573,8 @@ bool NonhierBox::intersect(const glm::vec3 origin, const glm::vec3 direction, In
         if (direction.y < 0.0){
             max_normal = glm::vec3(0.0, 1.0, 0.0);
         } else {
-            max_normal = glm::vec3(0.0, -1.0, 0.0);
+            //max_normal = glm::vec3(0.0, -1.0, 0.0);
+            max_normal = glm::vec3(0.0, 1.0, 0.0);
         }
     }
     
@@ -597,7 +591,8 @@ bool NonhierBox::intersect(const glm::vec3 origin, const glm::vec3 direction, In
         if (direction.z < 0.0){
             min_normal = glm::vec3(0.0, 0.0, 1.0);
         } else {
-            min_normal = glm::vec3(0.0, 0.0, -1.0);
+            //min_normal = glm::vec3(0.0, 0.0, -1.0);
+            min_normal = glm::vec3(0.0, 0.0, 1.0);
         }
     }
     
@@ -607,7 +602,8 @@ bool NonhierBox::intersect(const glm::vec3 origin, const glm::vec3 direction, In
         if (direction.z < 0.0){
             max_normal = glm::vec3(0.0, 0.0, 1.0);
         } else {
-            max_normal = glm::vec3(0.0, 0.0, -1.0);
+            //max_normal = glm::vec3(0.0, 0.0, -1.0);
+            max_normal = glm::vec3(0.0, 0.0, 1.0);
         }
     }
     
