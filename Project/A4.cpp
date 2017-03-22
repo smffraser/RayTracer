@@ -343,7 +343,7 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
                     
                     //std::cout << "old colour_vec: " << glm::to_string(colour_vec) << std::endl;
                     // Add the final shade colour to colour vec (average the final shade colour)
-                    colour_vec = colour_vec + shade_colour * (1.0 / soft_rays);
+                    colour_vec = colour_vec + (1.0 / lights.size()) * shade_colour * (1.0 / soft_rays);
                     //std::cout << "new colour_vec: " << glm::to_string(colour_vec) << std::endl;
                     //exit(1);
                     
@@ -465,7 +465,7 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
         //std::cout << "colour_vec: " << glm::to_string(colour_vec) << std::endl;
         //return colour_vec + material->get_ks() * ((fresnel_R * reflected_colour) + ((1.0 - fresnel_R) * refracted_colour));
         return colour_vec + material->get_ks() * reflected_colour + refracted_colour;
-        //return colour_vec;
+        //return colour_vec;)
         //return colour_vec + (1.0 / lights.size()) * reflected_colour * material->get_ks();
     }
 

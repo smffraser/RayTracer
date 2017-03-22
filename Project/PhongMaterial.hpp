@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include "Image.hpp"
 
 #include "Material.hpp"
 
@@ -14,10 +15,12 @@ public:
     double get_index() const;
     bool zero_ks() const;
     bool zero_kd() const;
+    void set_texture(Image texture);
 
 private:
   glm::vec3 m_kd;
   glm::vec3 m_ks;
+  Image m_texture;
 
   double m_shininess;
   double m_ref_index;

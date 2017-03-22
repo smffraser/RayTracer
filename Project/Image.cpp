@@ -10,7 +10,8 @@ const uint Image::m_colorComponents = 3; // Red, blue, green
 Image::Image()
   : m_width(0),
     m_height(0),
-    m_data(0)
+    m_data(0),
+    m_has_data(false)
 {
 }
 
@@ -25,13 +26,15 @@ Image::Image(
 	size_t numElements = m_width * m_height * m_colorComponents;
 	m_data = new double[numElements];
 	memset(m_data, 0, numElements*sizeof(double));
+    m_has_data = true;
 }
 
 //---------------------------------------------------------------------------------------
 Image::Image(const Image & other)
   : m_width(other.m_width),
     m_height(other.m_height),
-    m_data(other.m_data ? new double[m_width * m_height * m_colorComponents] : 0)
+    m_data(other.m_data ? new double[m_width * m_height * m_colorComponents] : 0),
+    m_has_data(other.m_has_data)
 {
   if (m_data) {
     std::memcpy(m_data, other.m_data,
@@ -53,6 +56,7 @@ Image & Image::operator=(const Image& other)
   m_width = other.m_width;
   m_height = other.m_height;
   m_data = (other.m_data ? new double[m_width * m_height * m_colorComponents] : 0);
+  m_has_data = other.m_has_data;
 
   if (m_data) {
     std::memcpy(m_data,
@@ -124,6 +128,39 @@ bool Image::savePng(const std::string & filename) const
 }
 
 //---------------------------------------------------------------------------------------
+bool Image::loadPng(const std::string & filename) {
+    
+    std::vector<unsigned char> image;
+    unsigned error = lodepng::decode(image, m_width, m_height, filename, LCT_RGB);
+    
+    if(error) {
+        std::cerr << "decode error " << error << ": " << lodepng_error_text(error) << std::endl;
+        return false;
+    }
+    
+    std::cout << "got image" << std::endl;
+    delete[] m_data;
+    m_data = new double[m_width * m_height * m_colorComponents];
+    
+    double color;
+    for (uint y(0); y < m_height; y++) {
+        for (uint x(0); x < m_width; x++) {
+            for (uint i(0); i < m_colorComponents; ++i) {
+                
+                color = image[m_colorComponents * (m_width * y + x) + i] / 255.0;
+                color = clamp(color, 0.0, 1.0);
+                m_data[m_colorComponents * (m_width * y + x) + i] = color;
+            }
+        }
+    }
+    
+    m_has_data = true;
+    
+    return true;
+    
+}
+
+//---------------------------------------------------------------------------------------
 const double * Image::data() const
 {
   return m_data;
@@ -133,4 +170,9 @@ const double * Image::data() const
 double * Image::data()
 {
   return m_data;
+}
+
+//
+bool Image::has_data() const{
+    return m_has_data;
 }
