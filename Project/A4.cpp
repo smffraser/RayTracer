@@ -167,7 +167,7 @@ glm::vec3 determine_lighting(Ray r, Intersection &inter, Light* light, const Pho
     }
     
     // Using the diffuse brightness, determine the diffuse colour component
-    glm::vec3 diffuse_colour = diffuse_b * material->get_kd() * light->colour;
+    glm::vec3 diffuse_colour = diffuse_b * material->get_kd(inter.u, inter.v) * light->colour;
     
     // 2) Specular colour
     // Now we need to determine the specular brightness
@@ -202,20 +202,23 @@ glm::vec3 determine_lighting(Ray r, Intersection &inter, Light* light, const Pho
     return attenuation * (diffuse_colour + specular_colour);
 }
 
-double get_fresnel_R(double n1, double n2, double in_out, double square_root, glm::vec3 direction, glm::vec3 normal){
+double get_fresnel_R(double n1, double n2, glm::vec3 direction, glm::vec3 normal, double cosI, double cosT){
+    double R0 = pow((n1-n2)/(n1+n2), 2);
+    //double R0 = ((n1 - n2)*(n1 - n2))/((n1 + n2)*(n1 + n2));
     
-    double R0 = ((n1 - n2)*(n1 - n2))/((n1 + n2)*(n1 + n2));
-    double R = R0 + (1-R0)*pow((1-glm::dot(direction, normal)),5);
-    
-    // Compute Fresnel coefficient
-    double a = (n1 * in_out - n2 * square_root) / (n1 * in_out + n2 * square_root);
-    double b = (n2 * in_out - n1 * square_root) / (n2 * in_out + n1 * square_root);
-    double R2 = ((a * a) + (b * b)) * 0.5;
-    
-    return R2;
+    double R;
+    if (n1 <= n2){
+        R = R0 + (1-R0)*pow((1-cosI), 5);
+    } else {
+        R = R0 + (1-R0)*pow((1-cosT), 5);
+    }
+    //std::cout << "R0: " << R0 << std::endl;
+    //std::cout << "R: " << R << std::endl;
+    //std::cout << "cosT: " << cosT << std::endl;
+    return R;
 }
 
-Ray get_refracted_ray (Ray incident, Intersection intersection, double index, bool& totalInternalReflection, double& fresnel) {
+Ray get_refracted_ray (Ray incident, Intersection intersection, double index, bool& totalInternalReflection, double& fresnel, double& final_ni, double& final_nt) {
     double n_i, n_t; // indices of refraction for the two mediums
     double n; // will store n_i/n_t
     
@@ -229,6 +232,7 @@ Ray get_refracted_ray (Ray incident, Intersection intersection, double index, bo
     
     // Check if the incident ray is entering or exiting a primitive
     // If the normal and the incident ray have a negative dot product, then the ray is entering the primitive
+    double vndot = glm::dot(norm_v, normal) ;
     if (glm::dot(norm_v, normal) < 0) {
         // incident ray entered primitive
         //std::cout << "entering" << std::endl;
@@ -243,9 +247,9 @@ Ray get_refracted_ray (Ray incident, Intersection intersection, double index, bo
         // need to flip the normal
         normal = (-1) * normal;
     }
+    vndot = glm::dot(norm_v, normal) < 0;
     n = n_i/n_t;
-    //std::cout << "n: " << n << std::endl;
-    double vndot = glm::dot(norm_v, normal) < 0;
+    //std::cout << "n: " << n << std::endl
     double bigugly = 1 - (pow(n, 2) * (1-pow(vndot,2)));
     if (bigugly < 0) {
         // total internal reflection
@@ -260,7 +264,9 @@ Ray get_refracted_ray (Ray incident, Intersection intersection, double index, bo
         t_direction = ((-1)*n*vndot - sqrt(bigugly))*normal + (n*norm_v);
         //std::cout << "incident: " << glm::to_string(norm_v) << std::endl;
         //std::cout << "refracted direction: " << glm::to_string(t_direction) << std::endl;
-        fresnel = get_fresnel_R(n_i, n_t, vndot, sqrt(bigugly), norm_v, normal);
+        fresnel = get_fresnel_R(n_i, n_t, norm_v, normal, vndot, sqrt(bigugly));
+        final_ni = n_i ;
+        final_nt = n_t ;
         return Ray{t_origin, t_direction};
     }
 }
@@ -304,7 +310,7 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
         
         const PhongMaterial* material = dynamic_cast<const PhongMaterial*>(intersection.material);
         // Material does not emit light in this assignment so no ke
-        glm::vec3 colour_vec = material->get_kd() * ambient;
+        glm::vec3 colour_vec = material->get_kd(intersection.u, intersection.v) * ambient;
         glm::vec3 p = intersection.inter_point + (1e-2)*intersection.inter_normal;
         
         if (!material->zero_kd()){
@@ -408,6 +414,7 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
         }
         
         double fresnel_R = 1.0;
+        double ni, nt ;
         glm::vec3 refracted_colour(0.0, 0.0, 0.0);
         // Refraction
         if (!material->zero_ks() && material->get_index() > 0.0 && refract_count > 0){
@@ -446,7 +453,7 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
          
             bool totalInternalReflection = false;
             //std::cout << "TEST" << std::endl;
-            Ray refractive_ray = get_refracted_ray(r, intersection, material->get_index(), totalInternalReflection, fresnel_R);
+            Ray refractive_ray = get_refracted_ray(r, intersection, material->get_index(), totalInternalReflection, fresnel_R, ni, nt);
             //std::cout << "after: " << totalInternalReflection << std::endl;
             if (!totalInternalReflection) {
                 //std::cout << "not it" << std::endl;
@@ -465,6 +472,7 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
         //std::cout << "colour_vec: " << glm::to_string(colour_vec) << std::endl;
         //return colour_vec + material->get_ks() * ((fresnel_R * reflected_colour) + ((1.0 - fresnel_R) * refracted_colour));
         return colour_vec + material->get_ks() * reflected_colour + refracted_colour;
+        //return colour_vec + refracted_colour;
         //return colour_vec;)
         //return colour_vec + (1.0 / lights.size()) * reflected_colour * material->get_ks();
     }

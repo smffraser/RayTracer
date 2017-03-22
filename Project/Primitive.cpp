@@ -85,9 +85,14 @@ bool Plane::intersect(const glm::vec3 origin, const glm::vec3 direction, Interse
             // Both x and y are inside the bounds
             inter.inter_point = possible_intersection;
             inter.inter_normal = glm::normalize(normal);
+        
+            inter.u = 0.5 + inter.inter_point[0];
+            inter.v = 1- (0.5 + inter.inter_point[1]);
+            
             return true;
         }
     }
+    
     return false ;
 }
 
