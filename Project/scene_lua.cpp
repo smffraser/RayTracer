@@ -517,6 +517,35 @@ int gr_texture_cmd(lua_State* L)
     return 0;
 }
 
+// Add a bump texture
+// Add a texture
+extern "C"
+int gr_bump_cmd(lua_State* L)
+{
+    GRLUA_DEBUG_CALL;
+    
+    
+    gr_node_ud* selfdata = (gr_node_ud*)luaL_checkudata(L, 1, "gr.node");
+    luaL_argcheck(L, selfdata != 0, 1, "Node expected");
+    
+    GeometryNode* self = dynamic_cast<GeometryNode*>(selfdata->node);
+    luaL_argcheck(L, self != 0, 1, "Geometry node expected");
+    
+    Material* material = self->m_material;
+    const char* filename = luaL_checkstring(L, 2);
+    
+    Image bump;
+    luaL_argcheck(L, bump.loadPng(filename), 2, "Failed to load png file");
+    
+    Material* new_material = material;
+    PhongMaterial* p_mat = static_cast<PhongMaterial* >(new_material);
+    p_mat->set_bump(bump);
+    
+    self->setMaterial(new_material);
+    
+    return 0;
+}
+
 // Add a child to a node
 extern "C"
 int gr_node_add_child_cmd(lua_State* L)
@@ -692,6 +721,7 @@ static const luaL_Reg grlib_node_methods[] = {
   {"add_child", gr_node_add_child_cmd},
   {"set_material", gr_node_set_material_cmd},
   {"set_texture", gr_texture_cmd},
+  {"set_bump", gr_bump_cmd},
   {"scale", gr_node_scale_cmd},
   {"rotate", gr_node_rotate_cmd},
   {"translate", gr_node_translate_cmd},

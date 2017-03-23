@@ -87,7 +87,17 @@ bool Plane::intersect(const glm::vec3 origin, const glm::vec3 direction, Interse
             inter.inter_normal = glm::normalize(normal);
         
             inter.u = 0.5 + inter.inter_point[0];
-            inter.v = 1- (0.5 + inter.inter_point[1]);
+            inter.v = 1 - (0.5 + inter.inter_point[1]);
+            
+            // Need the tangent vectors of the surface 
+            // Note we are one a plane so the tangent vectors aren't anything special
+            glm::vec3 O_u = glm::vec3(1.0, 0.0, 0.0);
+            glm::vec3 O_v = glm::vec3(0.0, 1.0, 0.0);
+            
+            // inter.x = N x O_v
+            // inter.y = N x O_u
+            inter.x = O_u;
+            inter.y = O_v;
             
             return true;
         }

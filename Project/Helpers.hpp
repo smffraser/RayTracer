@@ -21,13 +21,17 @@ public:
         inter_normal(glm::vec3(0.0, 0.0, 0.0)),
         u(INFINITY),
         v(INFINITY),
+        x(glm::vec3(0, 0, 0)),
+        y(glm::vec3(0, 0, 0)),
         material(NULL){};
     
-    Intersection(glm::vec3 inter_point, glm::vec3 inter_normal, const Material * material, double u, double v):
+    Intersection(glm::vec3 inter_point, glm::vec3 inter_normal, const Material * material, double u, double v, glm::vec3 x, glm::vec3 y):
         inter_point(inter_point),
         inter_normal(inter_normal),
         u(u),
         v(v),
+        x(x),
+        y(y),
         material(material){};
     
     // Intersection point between ray and object
@@ -39,6 +43,8 @@ public:
     // U and V for texture mapping
     double u;
     double v;
+    glm::vec3 x;
+    glm::vec3 y;
 };
 
 

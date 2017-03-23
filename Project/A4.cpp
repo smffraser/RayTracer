@@ -152,6 +152,11 @@ glm::vec3 determine_lighting(Ray r, Intersection &inter, Light* light, const Pho
     // We also need the vector from the eye to the point
     glm::vec3 e_vec = glm::vec3(r.origin) - inter.inter_point;
     
+    glm::vec3 normal = material->get_bumped_normal(inter.u, inter.v, inter.x, inter.y, inter.inter_normal);
+    if (inter.inter_normal.x != normal.x && inter.inter_normal.y != normal.y && inter.inter_normal.z != normal.z){
+        std::cout << "normal changed! old: " << glm::to_string(inter.inter_normal) << " to " << glm::to_string(normal) << std::endl;
+    }
+    
     // Colour is determined by a basic lighting model via the course notes section 16
     // 1) diffuse colour
     // 2) specular colour
@@ -159,7 +164,7 @@ glm::vec3 determine_lighting(Ray r, Intersection &inter, Light* light, const Pho
     
     // 1) Diffuse colour
     // Determine the diffuse brightness using the p_vector and the intersection normal
-    double diffuse_b = glm::dot(inter.inter_normal, glm::normalize(p_vec));
+    double diffuse_b = glm::dot(normal, glm::normalize(p_vec));
     
     // Check the diffuse brightness is not negative
     if (diffuse_b < 0.0){
@@ -176,7 +181,7 @@ glm::vec3 determine_lighting(Ray r, Intersection &inter, Light* light, const Pho
     double specular_b;
     if (diffuse_b > 0.0){
         glm::vec3 norm_neg_p_vec = (-1.0f)*glm::normalize(p_vec);
-        glm::vec3 reflected_vec = glm::normalize(norm_neg_p_vec - 2*glm::dot(norm_neg_p_vec, inter.inter_normal)*inter.inter_normal);
+        glm::vec3 reflected_vec = glm::normalize(norm_neg_p_vec - 2*glm::dot(norm_neg_p_vec, normal)*normal);
         specular_b = glm::dot(glm::normalize(e_vec), reflected_vec);
         // Check if negative and if so, set to zero
         if (specular_b < 0.0){
