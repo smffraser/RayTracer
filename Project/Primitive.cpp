@@ -1,6 +1,8 @@
 #include "Primitive.hpp"
 #include "polyroots.hpp"
 
+#include <glm/ext.hpp>
+
 Primitive::~Primitive()
 {
 }
@@ -606,13 +608,14 @@ bool NonhierBox::intersect(const glm::vec3 origin, const glm::vec3 direction, In
     } else {
         //min_normal = glm::vec3(-1.0, 0.0, 0.0);
         //max_normal = glm::vec3(-1.0, 0.0, 0.0);
-        min_normal = glm::vec3(-1.0, 0.0, 0.0);
-        max_normal = glm::vec3(-1.0, 0.0, 0.0);
+        min_normal = glm::vec3(1.0, 0.0, 0.0);
+        max_normal = glm::vec3(1.0, 0.0, 0.0);
     }
     
     // If the smaller t.x is larger than the larger t.y OR
     // the smaller t.y is larger than the larger t.x then
     // the ray misses the box completely
+    
     if ((tmin > ty_max) || (ty_min > tmax)){
         return false;
     }
@@ -678,9 +681,53 @@ bool NonhierBox::intersect(const glm::vec3 origin, const glm::vec3 direction, In
         }
     }
     
+    if (isnan(tmin)){
+        return false;
+    }
+    
     // Calculate point of intersection using tmin (the smaller and thus "in front" of the sides
     inter.inter_point = origin + (float)tmin*direction;
     inter.inter_normal = min_normal;
+    
+    // To determine u and v I need to know what plane the ray has intersected of the cube
+    // - if it intersects the x plane then the normal will be (1.0, 0.0, 0.0) and I will use y and z to calculate u and v
+    // - if it intersects the y plane then the normal will be (0.0, 1.0, 0.0) and I will use x and z to calculate u and v
+    // - if it intersects the z plane then the normal will be (0.0, 0.0, 1.0) and I will use x and y to calculate u and v
+    
+    int index_1, index_2;
+    
+    if (inter.inter_normal.x >= inter.inter_normal.y && inter.inter_normal.x >= inter.inter_normal.z) {
+        index_1 = 1;
+        index_2 = 2;
+    } else if (inter.inter_normal.y >= inter.inter_normal.x && inter.inter_normal.y >= inter.inter_normal.z){
+        index_1 = 0;
+        index_2 = 2;
+    } else {
+        index_1 = 0;
+        index_2 = 1;
+    }
+    
+    if (isnan(inter.inter_point[0]) || isnan(inter.inter_point[1])){
+        std::cout << "origin: " << glm::to_string(origin) << std::endl;
+        std::cout << "tmin: " << tmin << std::endl;
+        std::cout << "direction: " << glm::to_string(direction) <<std::endl;
+        std::cout << "interpoint: " << glm::to_string(inter.inter_point) << std::endl;
+        std::cout << "index_1: " << index_1 << " index_2: " << index_2 << std::endl;
+        std::cout << "inder.point[index_1]: " << inter.inter_point[index_1] << " inter.point[index_2]: " << inter.inter_point[index_2] << std::endl;
+    }
+
+    inter.u = (inter.inter_point[index_1] - m_pos[index_1]) / m_size;
+    inter.v = 1 - ((inter.inter_point[index_2] - m_pos[index_2]) / m_size);
+    
+    if(inter.inter_normal.z <= inter.inter_normal.x && inter.inter_normal.z <= inter.inter_normal.y) {
+        inter.x = glm::vec3(-inter.inter_normal.y, inter.inter_normal.x, 0.0);
+    } else if(inter.inter_normal.y <= inter.inter_normal.x){
+        inter.x = glm::vec3(-inter.inter_normal.z, 0, inter.inter_normal.x);
+    } else {
+        inter.x = glm::vec3(0, -inter.inter_normal.z, inter.inter_normal.y);
+    }
+    
+    inter.y = glm::cross(inter.inter_normal, inter.x);
     
     return true;
 }

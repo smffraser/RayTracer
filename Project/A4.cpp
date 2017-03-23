@@ -81,6 +81,8 @@ bool find_intersection(Ray r, SceneNode* node, Intersection &inter){
         //std::cout << "intersection with object: " << name << std::endl;
         inter.inter_point = glm::vec3(node->get_transform() * glm::vec4(inter.inter_point, 1.0));
         inter.inter_normal = glm::normalize(transNorm(node->get_inverse(), inter.inter_normal));
+        inter.x = glm::normalize(transNorm(node->get_inverse(), inter.x));
+        inter.y = glm::normalize(transNorm(node->get_inverse(), inter.y));
     }
     
     return intersection_result;
@@ -202,7 +204,6 @@ glm::vec3 determine_lighting(Ray r, Intersection &inter, Light* light, const Pho
     if (attenuation != 1){
         std::cout << attenuation << std::endl;
     }
-    
     // The final colour is attenuation * (diffuse + specular)
     return attenuation * (diffuse_colour + specular_colour);
 }

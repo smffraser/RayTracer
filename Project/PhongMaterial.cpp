@@ -22,6 +22,9 @@ glm::vec3 PhongMaterial::get_kd(double u, double v) const{
     // Change this!
     
     if (m_texture.has_data()) {
+        
+        //std::cout << "u: " << u << " v: " << v << std::endl;
+        
         // This means that the material has a texture and the diffuse
         // values need to be pulled from the texture data
         
@@ -37,6 +40,8 @@ glm::vec3 PhongMaterial::get_kd(double u, double v) const{
         float v_p = d_j - j;
         
         // Wrap around to other side if the coordinates are out of bounds of the texture file
+        i = (i >= m_texture.width()) ? 0 : i;
+        j = (j >= m_texture.height()) ? 0 : j;
         int i_1 = ((i+1) >= m_texture.width()) ? 0 : i+1;
         int j_1 = ((j+1) >= m_texture.height()) ? 0 : j+1;
         
