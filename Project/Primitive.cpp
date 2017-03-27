@@ -145,6 +145,22 @@ bool NonhierSphere::intersect(const glm::vec3 origin, const glm::vec3 direction,
         if (roots[0] > 0) {
             inter.inter_point = og + (float)roots[0]*di;
             inter.inter_normal = glm::normalize(inter.inter_point - m_pos);
+            
+            // To get U and V values of a sphere, we use the normal, which is a unit vector that goes from
+            // the origin of the sphere to the point of intersection
+            // Assume that the poles are alligned with the Y axis (which they should be)
+            // Then, u = 0.5 + arctan2(-n.z, d.x)/2*PI
+            // v = 0.5 - arcsin(n.y)/PI
+            
+            double angle1 = std::atan2(-inter.inter_normal.z, inter.inter_normal.x);
+            double angle2 = std::acos(-inter.inter_normal.y/m_radius);
+            
+            inter.u = 0.5 + (angle1 / (2.0 * M_PI));
+            inter.v =(angle2/M_PI);
+            
+            inter.x = glm::vec3(-m_radius*sin(angle1)*sin(angle2), 0, -m_radius*cos(angle1)*sin(angle2));
+            inter.y = glm::vec3(m_radius*cos(angle1)*cos(angle2), m_radius*sin(angle2), -m_radius*sin(angle1)*cos(angle2));
+            
             return true;
         }
     } else if (num_roots == 2){
@@ -156,11 +172,39 @@ bool NonhierSphere::intersect(const glm::vec3 origin, const glm::vec3 direction,
         if (min > 0) {
             inter.inter_point = og + (float)min*di;
             inter.inter_normal = glm::normalize(inter.inter_point - m_pos);
+            // To get U and V values of a sphere, we use the normal, which is a unit vector that goes from
+            // the origin of the sphere to the point of intersection
+            // Assume that the poles are alligned with the Y axis (which they should be)
+            // Then, u = 0.5 + arctan2(-n.z, d.x)/2*PI
+            // v = 0.5 - arcsin(n.y)/PI
+            
+            double angle1 = std::atan2(-inter.inter_normal.z, inter.inter_normal.x);
+            double angle2 = std::acos(-inter.inter_normal.y/m_radius);
+            
+            inter.u = 0.5 + (angle1 / (2.0 * M_PI));
+            inter.v = (angle2/M_PI);
+            
+            inter.x = glm::vec3(-m_radius*sin(angle1)*sin(angle2), 0, -m_radius*cos(angle1)*sin(angle2));
+            inter.y = glm::vec3(m_radius*cos(angle1)*cos(angle2), m_radius*sin(angle2), -m_radius*sin(angle1)*cos(angle2));
             return true;
         }
         if (min < 0 && other > 0) {
             inter.inter_point = og + (float)other*di;
             inter.inter_normal = glm::normalize(inter.inter_point - m_pos);
+            // To get U and V values of a sphere, we use the normal, which is a unit vector that goes from
+            // the origin of the sphere to the point of intersection
+            // Assume that the poles are alligned with the Y axis (which they should be)
+            // Then, u = 0.5 + arctan2(-n.z, d.x)/2*PI
+            // v = 0.5 - arcsin(n.y)/PI
+            
+            double angle1 = std::atan2(-inter.inter_normal.z, inter.inter_normal.x);
+            double angle2 = std::acos(-inter.inter_normal.y/m_radius);
+            
+            inter.u = 0.5 + (angle1 / (2.0 * M_PI));
+            inter.v = (angle2/M_PI);
+            
+            inter.x = glm::vec3(-m_radius*sin(angle1)*sin(angle2), 0, -m_radius*cos(angle1)*sin(angle2));
+            inter.y = glm::vec3(m_radius*cos(angle1)*cos(angle2), m_radius*sin(angle2), -m_radius*sin(angle1)*cos(angle2));
             return true;
         }
     }
