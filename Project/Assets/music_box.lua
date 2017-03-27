@@ -2,27 +2,23 @@
 
 -- materials
 brown = gr.material({0.655, 0.494, 0.239}, {0.0, 0.0, 0.0}, 25, 0)
-blue = gr.material({0.549, 0.745, 0.839}, {0.0, 0.0, 0.0}, 25, 0)
 mirror_mat = gr.material({0.0, 0.0, 0.0}, {0.9, 0.9, 0.9}, 1000, 0)
 gold = gr.material({0.75164, 0.60648, 0.22648}, {0.628281, 0.555802, 0.366065}, 51.2, 0)
-
--- Scene
-scene = gr.node('root')
 
 -- Music Box
 box_scale = 2
 
 box = gr.cube('box')
-scene:add_child(box)
+--scene:add_child(box)
 box:set_material(brown)
-box:set_texture("../Assets/fine_wood.png")
+box:set_texture("Assets/fine_wood.png")
 box:scale(box_scale, box_scale*0.5, box_scale)
 box:translate(-box_scale/2, -box_scale, 0)
 
 lid = gr.cube('lid')
 box:add_child(lid)
 lid:set_material(brown)
-box:set_texture("../Assets/fine_wood.png")
+box:set_texture("Assets/fine_wood.png")
 lid:scale(1, 1/box_scale*0.3, box_scale)
 lid:rotate('x', 90)
 lid:translate(0, box_scale*1.5, -0.15)
@@ -322,21 +318,3 @@ right_ankle:add_child(right_foot)
 right_foot:set_material(pink)
 right_foot:scale(f_x_scale, f_y_scale, f_z_scale)
 right_foot:translate(0.0, -0.3, 0.1)
-
-
-white_light = gr.light({5, 10, 10}, {0.9, 0.9, 0.9}, {1, 0, 0}, 8, 8)
-scene:rotate('y', -20)
-scene:rotate('x', 20)
-
-
-num_renders = 40
-degree = 360 / num_renders
-
--- Animation
-for i=1,num_renders,1 do
-    puppet_node:translate(-0.1, 0, -0.3)
-    puppet_node:rotate('y', degree)
-    puppet_node:translate(0.1, 0, 0.3)
-    joint_1:rotate('z', degree)
-    gr.render(scene, string.format("animation-%i.png", i), 500, 500, {-0.5, -1, 5}, {0, 0, -800}, {0, 1, 0}, 50, {0.3, 0.3, 0.3}, {white_light}, 8, 5, 5, 0, 32, 1, 0.1, 0)
-end

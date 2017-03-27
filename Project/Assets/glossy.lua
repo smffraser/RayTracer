@@ -4,15 +4,16 @@
 scene = gr.node('scene')
 
 -- Mirror Materials
-mirror0 = gr.material({0, 0, 0}, {1.0, 1.0, 1.0}, 0.1, 0)
-mirror1 = gr.material({0, 0, 0}, {1.0, 1.0, 1.0}, 1.0, 0)
-mirror2 = gr.material({0, 0, 0}, {1.0, 1.0, 1.0}, 10.0, 0)
-mirror3 = gr.material({0, 0, 0}, {1.0, 1.0, 1.0}, 100.0, 0)
-mirror4 = gr.material({0, 0, 0}, {1.0, 1.0, 1.0}, 1000.0, 0)
-mirror5 = gr.material({0, 0, 0}, {1.0, 1.0, 1.0}, 10000.0, 0)
+mirror0 = gr.material({0, 0, 0}, {1.0, 1.0, 1.0}, 0.01, 0)
+mirror1 = gr.material({0, 0, 0}, {1.0, 1.0, 1.0}, 0.1, 0)
+mirror2 = gr.material({0, 0, 0}, {1.0, 1.0, 1.0}, 1.0, 0)
+mirror3 = gr.material({0, 0, 0}, {1.0, 1.0, 1.0}, 10.0, 0)
+mirror4 = gr.material({0, 0, 0}, {1.0, 1.0, 1.0}, 100.0, 0)
+mirror5 = gr.material({0, 0, 0}, {1.0, 1.0, 1.0}, 1000.0, 0)
 
 -- Colours
 grey = gr.material({0.74, 0.742, 0.734}, {0, 0, 0}, 0, 0)
+grey_floor = gr.material({0.74, 0.742, 0.734}, {0, 0, 0}, 0, 0)
 green = gr.material({0.8, 1.0, 0.8}, {0, 0, 0}, 0, 0)
 pink = gr.material({1.0, 0.6, 0.8}, {0, 0, 0}, 0, 0)
 blue = gr.material({0.6, 0.8, 1.0}, {0, 0, 0}, 0, 0)
@@ -25,11 +26,14 @@ room = gr.node('room')
 scene:add_child(room)
 
 -- Room Floor
-floor = gr.mesh('floor', 'Assets/plane.obj')
+floor = gr.plane('floor')
 room:add_child(floor)
-floor:set_material(grey)
-floor:translate(0.0, -1.0, 0.0)
-floor:scale(room_width, 1, room_length)
+floor:set_material(grey_floor)
+floor:set_texture('Assets/wood_floor.png')
+--floor:set_bump('Assets/test_texture.png')
+floor:scale(room_width, room_length, 1)
+floor:rotate('x', -90)
+floor:translate(0.0, -1, 0.0)
 
 -- Room Ceiling
 ceiling = gr.mesh('ceiling','Assets/plane.obj')
@@ -84,24 +88,28 @@ s0:translate(3, radius-1, -8)
 
 s1 = gr.sphere('s1')
 scene:add_child(s1)
+-- mirror 1
 s1:set_material(mirror1)
 s1:translate(-3, radius-1, -8)
 s1:scale(radius, radius, radius)
 
 s2 = gr.sphere('s2')
 scene:add_child(s2)
+-- mirror 2
 s2:set_material(mirror2)
 s2:translate(-2, radius-1, -12)
 s2:scale(radius, radius, radius)
 
 s3 = gr.sphere('s3')
 scene:add_child(s3)
+--3
 s3:set_material(mirror3)
 s3:translate(0, radius-1, -8)
 s3:scale(radius, radius, radius)
 
 s4 = gr.sphere('s4')
 scene:add_child(s4)
+-- 4
 s4:set_material(mirror4)
 s4:translate(2, radius-1, -12)
 s4:scale(radius, radius, radius)
@@ -110,9 +118,9 @@ s4:scale(radius, radius, radius)
 light_color = {0.780131, 0.780409, 0.775833}
 light_color_2 = {0.780131/2, 0.780409/2, 0.775833/2}
 
-light1 = gr.light({0, room_height - 3.0, -3}, light_color_2, {1, 0, 0})
-light2 = gr.light({-2.0, room_height - 3.0, -3}, light_color_2, {1, 0, 0})
+light1 = gr.light({0, room_height - 3.0, -3}, light_color_2, {1, 0, 0}, 0, 0)
+light2 = gr.light({-2.0, room_height - 3.0, -3}, light_color_2, {1, 0, 0}, 0, 0)
 
 
 -- Render Final Scene
-gr.render(scene,'glossy.png', 512, 512, {0, room_height/2.0-1.0, 0}, {0, -room_height, -room_length}, {0, 0, -1}, 50, {0.2,0.2,0.2}, {light1, light2}, 8, 4, 1, 1)
+gr.render(scene,'glossy.png', 512, 512, {0, room_height/2.0-1.0, 0}, {0, -room_height, -room_length}, {0, 0, -1}, 50, {0.2,0.2,0.2}, {light1, light2}, 12, 5, 5, 16, 0, 0, 0.5, 0)

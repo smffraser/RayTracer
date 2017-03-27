@@ -156,7 +156,7 @@ glm::vec3 determine_lighting(Ray r, Intersection &inter, Light* light, const Pho
     
     glm::vec3 normal = material->get_bumped_normal(inter.u, inter.v, inter.x, inter.y, inter.inter_normal);
     if (inter.inter_normal.x != normal.x && inter.inter_normal.y != normal.y && inter.inter_normal.z != normal.z){
-        std::cout << "normal changed! old: " << glm::to_string(inter.inter_normal) << " to " << glm::to_string(normal) << std::endl;
+        //std::cout << "normal changed! old: " << glm::to_string(inter.inter_normal) << " to " << glm::to_string(normal) << std::endl;
     }
     
     // Colour is determined by a basic lighting model via the course notes section 16
@@ -423,7 +423,7 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
         double ni, nt ;
         glm::vec3 refracted_colour(0.0, 0.0, 0.0);
         // Refraction
-        if (!material->zero_ks() && material->get_index() > 0.0 && refract_count > 0){
+        if (material->get_index() > 0.0 && refract_count > 0){
             
             /*
             glm::vec3 norm = intersection.inter_normal;
@@ -486,7 +486,78 @@ glm::vec3 ray_colour(Ray r, glm::vec3 bg, SceneNode *root, const glm::vec3 & amb
     return bg;
 }
 
-void thread_render(SceneNode *root, Image & image, const glm::vec3 & eye, const glm::vec3 & view, const glm::vec3 & up, double fovy, const glm::vec3 & ambient, const std::list<Light *> & lights, glm::mat4 pixel_to_world, int start_x, int end_x, int start_y, int end_y, int thread_num, int y_skip, int reflect_count, int refract_count, int glossy_rays, int soft_rays) {
+bool colour_threshold(float c1, float c2, float c3, float c4, float threshold){
+    
+    if ((std::abs(c1 - c2) > threshold || std::abs(c1 - c3) > threshold || std::abs(c1 - c4) > threshold) ||
+        (std::abs(c2 - c3) > threshold || std::abs(c2 - c4) > threshold) ||
+        (std::abs(c3 - c4) > threshold)) {
+        // The differerence in colour is too much
+        return true ;
+    } else {
+        return false;
+    }
+}
+
+
+glm::vec3 anti_alias_render(double x, double y, glm::mat4 pixel_to_world, const glm::vec3 & eye, glm::vec3 bg, SceneNode *root, const glm::vec3 & ambient, const std::list<Light *> & lights, int reflect_count, int refract_count, int glossy_rays, int soft_rays, int alias_count, double threshold, bool highlight, double pixel_size, double weight){
+    
+    double s_div = pixel_size * 0.25 ;
+    double l_div = pixel_size * 0.75 ;
+
+    
+    if (x + l_div > x+1 || y + l_div > y+1){
+        std::cout << "ERROR: Encroched on another pixel!" << std::endl;
+        exit(1);
+    }
+    
+    // Super sampling - sample four corners of pixel instead of just top left corner
+    glm::vec4 pixel_tl = glm::vec4(x+s_div, y+s_div, 0.0, 1.0);
+    glm::vec4 pixel_tr = glm::vec4(x+l_div, y+s_div, 0.0, 1.0);
+    glm::vec4 pixel_bl = glm::vec4(x+s_div, y+l_div, 0.0, 1.0);
+    glm::vec4 pixel_br = glm::vec4(x+l_div, y+l_div, 0.0, 1.0);
+    
+    // Get pixels in world coords
+    glm::vec3 p_tl = glm::vec3(pixel_to_world * pixel_tl);
+    glm::vec3 p_tr = glm::vec3(pixel_to_world * pixel_tr);
+    glm::vec3 p_bl = glm::vec3(pixel_to_world * pixel_bl);
+    glm::vec3 p_br = glm::vec3(pixel_to_world * pixel_br);
+    
+    // Create four rays
+    Ray ray_tl = {eye, glm::normalize(p_tl - eye)};
+    Ray ray_tr = {eye, glm::normalize(p_tr - eye)};
+    Ray ray_bl = {eye, glm::normalize(p_bl - eye)};
+    Ray ray_br = {eye, glm::normalize(p_br - eye)};
+    
+    // Get 4 colours
+    glm::vec3 colour_tl = ray_colour(ray_tl, bg, root, ambient, lights, reflect_count, refract_count, glossy_rays, soft_rays);
+    glm::vec3 colour_tr = ray_colour(ray_tr, bg, root, ambient, lights, reflect_count, refract_count, glossy_rays, soft_rays);
+    glm::vec3 colour_bl = ray_colour(ray_bl, bg, root, ambient, lights, reflect_count, refract_count, glossy_rays, soft_rays);
+    glm::vec3 colour_br = ray_colour(ray_br, bg, root, ambient, lights, reflect_count, refract_count, glossy_rays, soft_rays);
+    
+    // Check if r, g, or b difference is too much (over threshold)
+    if ((colour_threshold(colour_tl.x, colour_tr.x, colour_bl.x, colour_br.x, threshold) ||
+        colour_threshold(colour_tl.x, colour_tr.x, colour_bl.x, colour_br.x, threshold) ||
+        colour_threshold(colour_tl.x, colour_tr.x, colour_bl.x, colour_br.x, threshold)) &&
+        alias_count > 0)
+    {
+        if (highlight){
+            return glm::vec3(1.0, 0.0, 0.0);
+        } else {
+            // Sample again
+            double new_pixel_size = pixel_size / 2.0;
+            glm::vec3 c1 = anti_alias_render(x, y, pixel_to_world, eye, bg, root, ambient, lights, reflect_count, refract_count, glossy_rays, soft_rays, alias_count-1, threshold, highlight, new_pixel_size, weight/4.0);
+            glm::vec3 c2 = anti_alias_render(x+new_pixel_size, y, pixel_to_world, eye, bg, root, ambient, lights, reflect_count, refract_count, glossy_rays, soft_rays, alias_count-1, threshold, highlight, new_pixel_size, weight/4.0);
+            glm::vec3 c3 = anti_alias_render(x, y+new_pixel_size, pixel_to_world, eye, bg, root, ambient, lights, reflect_count, refract_count, glossy_rays, soft_rays, alias_count-1, threshold, highlight, new_pixel_size, weight/4.0);
+            glm::vec3 c4 = anti_alias_render(x+new_pixel_size, y+new_pixel_size, pixel_to_world, eye, bg, root, ambient, lights, reflect_count, refract_count, glossy_rays, soft_rays, alias_count-1, threshold, highlight, new_pixel_size, weight/4.0);
+            return c1 + c2 + c3 + c4 ;
+        }
+    } else {
+        //std::cout << "x, y: " << x+s_div << "," << y+s_div << " " << weight << " * " << glm::to_string(colour_tl) << " " << "x, y: " << x+l_div << "," << y+s_div << " " << weight << " * " << glm::to_string(colour_tr) << " " << "x, y: " << x+s_div << "," << y+l_div << " " << weight << " * " << glm::to_string(colour_bl) << " " << "x, y: " << x+l_div << "," << y+l_div << " " << weight << " * " << glm::to_string(colour_br);
+        return weight * colour_tl + weight * colour_tr + weight * colour_bl + weight * colour_br;
+    }
+}
+
+void thread_render(SceneNode *root, Image & image, const glm::vec3 & eye, const glm::vec3 & view, const glm::vec3 & up, double fovy, const glm::vec3 & ambient, const std::list<Light *> & lights, glm::mat4 pixel_to_world, int start_x, int end_x, int start_y, int end_y, int thread_num, int y_skip, int reflect_count, int refract_count, int glossy_rays, int soft_rays, int alias_count, double threshold, bool highlight) {
     
     int total_pixels = image.width() * image.height()/y_skip;
     int current_pixel = 1;
@@ -497,7 +568,7 @@ void thread_render(SceneNode *root, Image & image, const glm::vec3 & eye, const 
     for (int y = start_y; y < end_y; y += y_skip) {
         for (int x = start_x; x < end_x; x++) {
             
-            if (int(floorf((float)current_pixel / (float)total_pixels*100))%1 == 0){
+            if (int(floorf((float)current_pixel / (float)total_pixels*100))%5 == 0){
                 if (current_percent != int(floorf((float)current_pixel / (float)total_pixels*100))){
                     std::cout << "Thread " << thread_num+1 << " Progress: " << int(floorf((float)current_pixel / (float)total_pixels*100)) << "%" << std::endl;
                     current_percent = int(floorf((float)current_pixel / (float)total_pixels*100));
@@ -512,33 +583,13 @@ void thread_render(SceneNode *root, Image & image, const glm::vec3 & eye, const 
             
 #ifdef SUPERSAMPLE
             
-            // Super sampling - sample four corners of pixel instead of just top left corner
-            glm::vec4 pixel_tl = glm::vec4(x+0.25, y+0.25, 0.0, 1.0);
-            glm::vec4 pixel_tr = glm::vec4(x+0.75, y+0.25, 0.0, 1.0);
-            glm::vec4 pixel_bl = glm::vec4(x+0.25, y+0.75, 0.0, 1.0);
-            glm::vec4 pixel_br = glm::vec4(x+0.75, y+0.75, 0.0, 1.0);
+            //std::cout << "PIXEL: " << x << " " << y << std::endl;
+            glm::vec3 pixel_colour = anti_alias_render(x, y, pixel_to_world, eye, background_col, root, ambient, lights, reflect_count, refract_count, glossy_rays, soft_rays, alias_count, threshold, highlight, 1.0, 0.25);
+            //std::cout << std::endl ;
             
-            // Get pixels in world coords
-            glm::vec3 p_tl = glm::vec3(pixel_to_world * pixel_tl);
-            glm::vec3 p_tr = glm::vec3(pixel_to_world * pixel_tr);
-            glm::vec3 p_bl = glm::vec3(pixel_to_world * pixel_bl);
-            glm::vec3 p_br = glm::vec3(pixel_to_world * pixel_br);
-            
-            // Create four rays
-            Ray ray_tl = {eye, glm::normalize(p_tl - eye)};
-            Ray ray_tr = {eye, glm::normalize(p_tr - eye)};
-            Ray ray_bl = {eye, glm::normalize(p_bl - eye)};
-            Ray ray_br = {eye, glm::normalize(p_br - eye)};
-            
-            // Get 4 colours
-            glm::vec3 colour_tl = ray_colour(ray_tl, background_col, root, ambient, lights, reflect_count, refract_count, glossy_rays, soft_rays);
-            glm::vec3 colour_tr = ray_colour(ray_tr, background_col, root, ambient, lights, reflect_count, refract_count, glossy_rays, soft_rays);
-            glm::vec3 colour_bl = ray_colour(ray_bl, background_col, root, ambient, lights, reflect_count, refract_count, glossy_rays, soft_rays);
-            glm::vec3 colour_br = ray_colour(ray_br, background_col, root, ambient, lights, reflect_count, refract_count, glossy_rays, soft_rays);
-            
-            image(x, y, 0) = (colour_tl[0] + colour_tr[0] + colour_bl[0] + colour_br[0]) / 4.0f;
-            image(x, y, 1) = (colour_tl[1] + colour_tr[1] + colour_bl[1] + colour_br[1]) / 4.0f;
-            image(x, y, 2) = (colour_tl[2] + colour_tr[2] + colour_bl[2] + colour_br[2]) / 4.0f;
+            image(x, y, 0) = pixel_colour.x;
+            image(x, y, 1) = pixel_colour.y;
+            image(x, y, 2) = pixel_colour.z;
             
             current_pixel++;
             
@@ -601,7 +652,12 @@ void A4_Render(
         const int reflect_rays,
         const int refract_rays,
         const int glossy_rays,
-        const int soft_rays
+        const int soft_rays,
+               
+        // Adaptive AA params
+        const int alias_count,
+        const float threshold,
+        const bool highlight
 ) {
 
   // Fill in raytracing code here...
@@ -629,7 +685,7 @@ void A4_Render(
     std::vector<std::thread> threads(num_threads);
     for(int i = 0; i < num_threads; i++)
     {
-        threads[i] = std::thread(thread_render, root, std::ref(image), eye, view, up, fovy, ambient, lights, pixel_to_world, 0, image.width(), i, image.height(), i, num_threads, reflect_rays, refract_rays, glossy_rays, soft_rays);
+        threads[i] = std::thread(thread_render, root, std::ref(image), eye, view, up, fovy, ambient, lights, pixel_to_world, 0, image.width(), i, image.height(), i, num_threads, reflect_rays, refract_rays, glossy_rays, soft_rays, alias_count, threshold, highlight);
         //threads[i] = std::thread(test_func, root, std::ref(image));
         if(threads[i].get_id() == std::thread::id())
         {

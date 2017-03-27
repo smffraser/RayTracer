@@ -27,9 +27,9 @@ s5 = gr.nh_sphere('s5', {0, 100, -250}, 25)
 scene_root:add_child(s5)
 s5:set_material(mat1)
 
-white_light = gr.light({-100.0, 150.0, 400.0}, {0.9, 0.9, 0.9}, {1, 0, 0}, 5, 5)
+white_light = gr.light({-100.0, 150.0, 400.0}, {0.9, 0.9, 0.9}, {1, 0, 0}, 5, 4)
 orange_light = gr.light({400.0, 100.0, 150.0}, {0.7, 0.0, 0.7}, {1, 0, 0}, 5, 5)
 
 gr.render(scene_root, 'simple.png', 256, 256,
 	  {0, 0, 800}, {0, 0, -800}, {0, 1, 0}, 50,
-	  {0.3, 0.3, 0.3}, {white_light, orange_light}, 8, 5, 1, 0, 4)
+	  {0.3, 0.3, 0.3}, {white_light, orange_light}, 1, 5, 1, 0, 4)

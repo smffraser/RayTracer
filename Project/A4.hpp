@@ -28,5 +28,10 @@ void A4_Render(
         const int reflect_rays,
         const int refract_rays,
         const int glossy_rays,
-        const int soft_rays
+        const int soft_rays,
+               
+        // Adaptive AA params
+        const int alias_count,
+        const float threshold,
+        const bool highlight
 );

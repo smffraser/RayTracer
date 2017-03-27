@@ -398,6 +398,8 @@ bool NonhierCone::intersect(const glm::vec3 origin, const glm::vec3 direction, I
     glm::vec3 o = origin;
     glm::vec3 d = direction;
     
+    //std::cout << "testing for intersection with cone" << std::endl;
+    
     // Formula for an infinite cone is X^2 + Y^2 = Z^2
     // solve for t = (-B +- sqrt(B^2 - 4AC))/(2A)
     // A = d.x^2 + d.y^2 - d.z^2
@@ -543,7 +545,7 @@ bool NonhierCone::intersect(const glm::vec3 origin, const glm::vec3 direction, I
                 double y = inter.inter_point.y / mag ;
                 inter.inter_normal = glm::normalize(glm::vec3(x, y, 1.0));
             }
-            //std::cout << "INTERSECTION CONE!! outside cone" << std::endl;
+           // std::cout << "INTERSECTION CONE!! outside cone" << std::endl;
             return true;
         }
     }
@@ -708,12 +710,12 @@ bool NonhierBox::intersect(const glm::vec3 origin, const glm::vec3 direction, In
     }
     
     if (isnan(inter.inter_point[0]) || isnan(inter.inter_point[1])){
-        std::cout << "origin: " << glm::to_string(origin) << std::endl;
-        std::cout << "tmin: " << tmin << std::endl;
-        std::cout << "direction: " << glm::to_string(direction) <<std::endl;
-        std::cout << "interpoint: " << glm::to_string(inter.inter_point) << std::endl;
-        std::cout << "index_1: " << index_1 << " index_2: " << index_2 << std::endl;
-        std::cout << "inder.point[index_1]: " << inter.inter_point[index_1] << " inter.point[index_2]: " << inter.inter_point[index_2] << std::endl;
+        //std::cout << "origin: " << glm::to_string(origin) << std::endl;
+        //std::cout << "tmin: " << tmin << std::endl;
+        //std::cout << "direction: " << glm::to_string(direction) <<std::endl;
+        //std::cout << "interpoint: " << glm::to_string(inter.inter_point) << std::endl;
+        //std::cout << "index_1: " << index_1 << " index_2: " << index_2 << std::endl;
+        //std::cout << "inder.point[index_1]: " << inter.inter_point[index_1] << " inter.point[index_2]: " << inter.inter_point[index_2] << std::endl;
     }
 
     inter.u = (inter.inter_point[index_1] - m_pos[index_1]) / m_size;
