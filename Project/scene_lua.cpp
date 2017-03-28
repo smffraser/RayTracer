@@ -458,9 +458,10 @@ int gr_render_cmd(lua_State* L)
     int alias_count = luaL_optnumber(L, 16, 0);
     float threshold = luaL_optnumber(L, 17, INFINITY);
     bool highlight = luaL_optnumber(L, 18, 0);
+    bool anti = luaL_optnumber(L, 19, 0);
 
 	Image im( width, height);
-	A4_Render(root->node, im, eye, view, up, fov, ambient, lights, num_threads, reflect_count, refract_count, glossy_rays, soft_rays, alias_count, threshold, highlight);
+	A4_Render(root->node, im, eye, view, up, fov, ambient, lights, num_threads, reflect_count, refract_count, glossy_rays, soft_rays, alias_count, threshold, highlight, anti);
     im.savePng( filename );
 
 	return 0;

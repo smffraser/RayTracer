@@ -33,5 +33,6 @@ void A4_Render(
         // Adaptive AA params
         const int alias_count,
         const float threshold,
-        const bool highlight
+        const bool highlight,
+        const bool anti
 );

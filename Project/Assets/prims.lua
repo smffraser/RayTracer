@@ -1,35 +1,35 @@
--- A simple scene with some miscellaneous geometry.
+other = gr.material({1.0, 1.0, 0.0}, {0, 0, 0}, 0, 0)
 
-mat1 = gr.material({0.7, 1.0, 0.7}, {0.5, 0.5, 0.5}, 25, 0)
-mat2 = gr.material({0.5, 0.5, 0.5}, {0.5, 0.7, 0.5}, 25, 0)
-mat3 = gr.material({1.0, 0.6, 0.1}, {0.5, 0.7, 0.5}, 25, 0)
-mat4 = gr.material({0.7, 0.6, 1.0}, {0.5, 0.4, 0.8}, 25, 0)
+require('Assets/b_blocks')
 
-scene_root = gr.node('root')
-
-c1 = gr.nh_cone('c1', {0, 0, 0}, 100)
-scene_root:add_child(c1)
-c1:set_material(mat1)
-c1:rotate('X', 45)
-c1:rotate('Y', 120)
-c1:scale(1.5, 1.5, 1.5)
-c1:translate(-100, -1.5, 0)
-
-s4 = gr.nh_cylinder('s4', {0,0,0}, 50, 100)
---s4 = gr.nh_sphere('s4', {0,0,0}, 50)
-scene_root:add_child(s4)
-s4:set_material(mat1)
-s4:rotate('Y', 45)
-s4:scale(1.5, 1.5, 1.5)
-s4:translate(300, 0, -200)
+scene = gr.node('root')
+scene:add_child(blocks)
 
 
-white_light = gr.light({100.0, 150.0, 400.0}, {0.9, 0.9, 0.9}, {1, 0, 0}, 150, 150)
---white_light = gr.light({0, 0, 400.0}, {0.9, 0.9, 0.9}, {1, 0, 0}, 0, 0)
-orange_light = gr.light({400.0, 100.0, 150.0}, {0.7, 0.0, 0.7}, {1, 0, 0}, 0, 0)
+floor = gr.plane('floor')
+scene:add_child(floor)
+floor:set_material(other)
+floor:set_texture('Assets/toy_box1.png')
+floor:rotate('x',-90)
+floor:scale(15, 15, 15)
+floor:translate(0, 0, 0)
 
 
--- threads, reflec level, refract level, glossy rays, shadow rays
-gr.render(scene_root, 'prims.png', 500, 500,
-{0, 0, 800}, {0, 0, -800}, {0, 1, 0}, 50,
-{0.3, 0.3, 0.3}, {white_light, orange_light}, 1, 5, 5, 0, 0)
+wall = gr.plane('wall')
+scene:add_child(wall)
+wall:set_material(other)
+wall:scale(15, 15, 15)
+wall:translate(0, 0, -5)
+
+
+
+
+-- Render
+
+white_light = gr.light({-10, 10, 15}, {0.9, 0.9, 0.9}, {1, 0, 0}, 0, 0)
+
+--blocks:rotate('y', -20)
+--blocks:rotate('z', 90)
+scene:rotate('x', 20)
+
+gr.render(scene, string.format("primitives.png"), 500, 500, {1.6, 1.4, 10}, {0, 0, -20}, {0, 1, 0}, 50, {0.3, 0.3, 0.3}, {white_light}, 8, 5, 5, 0, 0, 3, 0.01, 0, 1)

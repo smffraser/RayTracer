@@ -557,7 +557,7 @@ glm::vec3 anti_alias_render(double x, double y, glm::mat4 pixel_to_world, const 
     }
 }
 
-void thread_render(SceneNode *root, Image & image, const glm::vec3 & eye, const glm::vec3 & view, const glm::vec3 & up, double fovy, const glm::vec3 & ambient, const std::list<Light *> & lights, glm::mat4 pixel_to_world, int start_x, int end_x, int start_y, int end_y, int thread_num, int y_skip, int reflect_count, int refract_count, int glossy_rays, int soft_rays, int alias_count, double threshold, bool highlight) {
+void thread_render(SceneNode *root, Image & image, const glm::vec3 & eye, const glm::vec3 & view, const glm::vec3 & up, double fovy, const glm::vec3 & ambient, const std::list<Light *> & lights, glm::mat4 pixel_to_world, int start_x, int end_x, int start_y, int end_y, int thread_num, int y_skip, int reflect_count, int refract_count, int glossy_rays, int soft_rays, int alias_count, double threshold, bool highlight, bool anti) {
     
     int total_pixels = image.width() * image.height()/y_skip;
     int current_pixel = 1;
@@ -581,20 +581,22 @@ void thread_render(SceneNode *root, Image & image, const glm::vec3 & eye, const 
             
             glm::vec3 background_col = glm::vec3(0.0, 0.0, 0.0);
             
-#ifdef SUPERSAMPLE
+//#ifdef SUPERSAMPLE
             
-            //std::cout << "PIXEL: " << x << " " << y << std::endl;
-            glm::vec3 pixel_colour = anti_alias_render(x, y, pixel_to_world, eye, background_col, root, ambient, lights, reflect_count, refract_count, glossy_rays, soft_rays, alias_count, threshold, highlight, 1.0, 0.25);
-            //std::cout << std::endl ;
+            if (anti){
+                
+                //std::cout << "PIXEL: " << x << " " << y << std::endl;
+                glm::vec3 pixel_colour = anti_alias_render(x, y, pixel_to_world, eye, background_col, root, ambient, lights, reflect_count, refract_count, glossy_rays, soft_rays, alias_count, threshold, highlight, 1.0, 0.25);
+                //std::cout << std::endl ;
+                
+                image(x, y, 0) = pixel_colour.x;
+                image(x, y, 1) = pixel_colour.y;
+                image(x, y, 2) = pixel_colour.z;
+                
+                current_pixel++;
+            } else {
             
-            image(x, y, 0) = pixel_colour.x;
-            image(x, y, 1) = pixel_colour.y;
-            image(x, y, 2) = pixel_colour.z;
-            
-            current_pixel++;
-            
-#else
-            
+//#else
             // Pixel to World Coords
             glm::vec4 pixel = glm::vec4(x, y, 0.0, 1.0);
             glm::vec3 p = glm::vec3(pixel_to_world * pixel);
@@ -619,8 +621,8 @@ void thread_render(SceneNode *root, Image & image, const glm::vec3 & eye, const 
             image(x, y, 2) = colour[2];
             
             current_pixel++;
-            
-#endif
+            }
+//#endif
         }
     }
 }
@@ -657,7 +659,8 @@ void A4_Render(
         // Adaptive AA params
         const int alias_count,
         const float threshold,
-        const bool highlight
+        const bool highlight,
+        const bool anti
 ) {
 
   // Fill in raytracing code here...
@@ -682,10 +685,14 @@ void A4_Render(
     
     std::cout << glm::to_string(pixel_to_world) << std::endl;
     
+    if (anti){
+        #define SUPERSAMPLE
+    }
+    
     std::vector<std::thread> threads(num_threads);
     for(int i = 0; i < num_threads; i++)
     {
-        threads[i] = std::thread(thread_render, root, std::ref(image), eye, view, up, fovy, ambient, lights, pixel_to_world, 0, image.width(), i, image.height(), i, num_threads, reflect_rays, refract_rays, glossy_rays, soft_rays, alias_count, threshold, highlight);
+        threads[i] = std::thread(thread_render, root, std::ref(image), eye, view, up, fovy, ambient, lights, pixel_to_world, 0, image.width(), i, image.height(), i, num_threads, reflect_rays, refract_rays, glossy_rays, soft_rays, alias_count, threshold, highlight, anti);
         //threads[i] = std::thread(test_func, root, std::ref(image));
         if(threads[i].get_id() == std::thread::id())
         {

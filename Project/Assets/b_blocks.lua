@@ -1,9 +1,9 @@
 blocks = gr.node('root')
 
-green = gr.material({0.0, 0.54, 0.0}, {0.0, 0.0, 0.0}, 25, 0)
-red = gr.material({0.54, 0.0, 0.0}, {0.0, 0.0, 0.0}, 25, 0)
+green = gr.material({0.0, 0.54, 0.0}, {0.07, 0.07, 0.07}, 1000000, 0)
+red = gr.material({0.5, 0.0, 0.0}, {0.07, 0.07, 0.07}, 1000000, 0)
 rred = gr.material({0.54, 0.0, 0.0}, {0.0, 0.0, 0.0}, 25, 0)
-blue = gr.material({0.0, 0.0, 0.54}, {0.0, 0.0, 0.0}, 25, 0)
+blue = gr.material({0.0, 0.0, 0.54}, {0.07, 0.07, 0.07}, 1000000, 0)
 
 
 -- Rectangular Blocks
@@ -58,7 +58,7 @@ blocks:add_child(c2)
 c2:set_material(red)
 c2:rotate('x', -90)
 c2:scale(cyl_x, cyl_z, cyl_y)
-c2:translate(-1.4, 1.8333, 1.5)
+c2:translate(-1.45, 1.8333, 1.5)
 
 block4 = gr.cube('b4')
 c2:add_child(block4)
@@ -101,4 +101,4 @@ cn2:translate(3.3, 3.5, 1)
 --blocks:rotate('z', 90)
 --blocks:rotate('x', 90)
 
---gr.render(blocks, string.format("blocks.png"), 350, 350, {-2, 0, 10}, {5, 8, -10}, {0, 1, 0}, 50, {0.3, 0.3, 0.3}, {white_light}, 4, 5, 5, 0, 0, 0, 1, 0)
+--gr.render(blocks, string.format("blocks.png"), 350, 350, {-2, 0, 10}, {5, 8, -10}, {0, 1, 0}, 50, {0.3, 0.3, 0.3}, {white_light}, 4, 5, 5, 0, 0, 0, 0.01, 0, 1)

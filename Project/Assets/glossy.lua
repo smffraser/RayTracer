@@ -28,54 +28,55 @@ scene:add_child(room)
 -- Room Floor
 floor = gr.plane('floor')
 room:add_child(floor)
-floor:set_material(grey_floor)
-floor:set_texture('Assets/wood_floor.png')
---floor:set_bump('Assets/test_texture.png')
+floor:set_material(pink)
+floor:set_texture('Assets/toy_box1.png')
 floor:scale(room_width, room_length, 1)
 floor:rotate('x', -90)
 floor:translate(0.0, -1, 0.0)
 
 -- Room Ceiling
-ceiling = gr.mesh('ceiling','Assets/plane.obj')
+ceiling = gr.plane('ceiling')
 room:add_child(ceiling)
-ceiling:set_material(grey)
+ceiling:set_material(blue)
+ceiling:set_texture('Assets/wallpaper.png')
+ceiling:rotate('x', 90)
 ceiling:translate(0.0, room_height-2.0, 0.0)
---ceiling:rotate('Z', 180.0)
 ceiling:scale(room_width, 1, room_length)
 
 -- Room Left Wall
-left_wall = gr.mesh('left_wall', 'Assets/plane.obj')
+left_wall = gr.plane('left_wall')
 room:add_child(left_wall)
-left_wall:set_material(green)
-left_wall:scale(room_height, 1.0, room_length)
-left_wall:rotate('Z', 90)
-left_wall:translate(room_width/2.0-1, room_height/2.0-1, 0.0)
+left_wall:set_material(pink)
+left_wall:rotate('y', 90)
+left_wall:scale(1, room_height, room_length)
+--left_wall:translate(-room_width/2.0-1, room_height/2.0-1, 0.0)
+left_wall:translate(-5, 3, 0.0)
 
 -- Room Right Wall
-right_wall = gr.mesh('right_wall', 'Assets/plane.obj')
+right_wall = gr.plane('right_wall')
 room:add_child(right_wall)
 right_wall:set_material(pink)
-right_wall:scale(room_height, 1.0, room_length)
-right_wall:rotate('Z', -90)
-right_wall:translate(-room_width/2.0+1, room_height/2.0-1.0, 0.0)
+right_wall:rotate('y', -90)
+right_wall:scale(1, room_height, room_length)
+--right_wall:translate(-room_width/2.0+1, room_height/2.0-1.0, 0.0)
+right_wall:translate(5, 3, 0)
 
 
 -- Room Back Wall
-back_wall = gr.mesh('back_wall', 'Assets/plane.obj')
+back_wall = gr.plane('back_wall')
 room:add_child(back_wall)
-back_wall:set_material(grey)
-back_wall:scale(room_width, 1.0, room_height)
-back_wall:rotate('X', -90.0)
-back_wall:translate(0.0, room_height/2.0-1.0, room_length/6)
+back_wall:set_material(pink)
+back_wall:rotate('y', 180)
+back_wall:scale(room_width, room_height, 1.0)
+back_wall:translate(0.0, 3, room_length/6)
 
 
 -- Room Front Wall
-front_wall = gr.mesh('front_wall', 'Assets/plane.obj')
+front_wall = gr.plane('front_wall')
 room:add_child(front_wall)
-front_wall:set_material(blue)
-front_wall:scale(room_width, 1.0, room_height)
-front_wall:rotate('x', 90.0)
-front_wall:translate(0.0, room_height/2.0-1.0, -room_length/2)
+front_wall:set_material(pink)
+front_wall:scale(room_width, room_height, 1)
+front_wall:translate(0.0, 5, -room_length/2)
 
 -- Make Spheres
 radius = 1.0
@@ -123,4 +124,9 @@ light2 = gr.light({-2.0, room_height - 3.0, -3}, light_color_2, {1, 0, 0}, 0, 0)
 
 
 -- Render Final Scene
-gr.render(scene,'glossy.png', 512, 512, {0, room_height/2.0-1.0, 0}, {0, -room_height, -room_length}, {0, 0, -1}, 50, {0.2,0.2,0.2}, {light1, light2}, 12, 5, 5, 16, 0, 0, 0.5, 0)
+
+-- threads, reflec level, refract level, glossy rays, shadow rays, AA_level, threshold, highlight, AA_on/off
+
+--room_height/2.0-1.0
+
+gr.render(scene,'glossy.png', 500, 500, {0, room_height/2.0-1.0, 0}, {0, -room_height, -room_length}, {0, 0, -1}, 50, {0.2,0.2,0.2}, {light1, light2}, 32, 5, 5, 32, 0, 0, 0.01, 0, 1)

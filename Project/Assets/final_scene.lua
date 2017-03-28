@@ -4,15 +4,26 @@ grey_floor = gr.material({0.74, 0.742, 0.734}, {0, 0, 0}, 0, 0)
 floor_mat = gr.material({0.8, 1.0, 0.8}, {0, 0, 0}, 0, 0)
 pink = gr.material({1.0, 0.6, 0.8}, {0, 0, 0}, 0, 0)
 blue = gr.material({0.6, 0.8, 1.0}, {0, 0, 0}, 0, 0)
+wallpaper = gr.material({0.6, 0.8, 1.0}, {0, 0, 0}, 0, 0)
 
 
 full_scene = gr.node('root')
+
+
 
 -- Box
 
 b_l = 20
 b_w = 15
 b_h = 5
+
+-- Wall
+wall = gr.plane('wall')
+full_scene:add_child(wall)
+wall:set_material(wallpaper)
+wall:set_texture('Assets/wallpaper.png')
+wall:scale(b_w*2, b_l+2, b_l+2)
+wall:translate(2.5,0,-b_l/2-1)
 
 -- floor plane
 floor = gr.plane('floor')
@@ -70,7 +81,7 @@ require('Assets/b_blocks')
 scene:add_child(blocks)
 blocks:rotate('y', 10)
 blocks:scale(1.2, 1.2, 1.2)
-blocks:translate(-5, 0, -3)
+blocks:translate(-4.8, 0, -3)
 
 -- music box
 require('Assets/music_box')
@@ -196,14 +207,14 @@ jack3:translate(0, 0.34, -1)
 
 m_s = 0.3
 
-glass_t = gr.material({0.0, 0.0, 0.0}, {0.25, 0.25, 0.25}, 100000, 1.52)
+glass_t = gr.material({0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, 100000, 1.52)
 --glass_t = gr.material({1.0, 0.0, 1.0}, {0.25, 0.25, 0.25}, 100000, 0)
 
 m1 = gr.sphere('m1')
 scene:add_child(m1)
 m1:set_material(glass_t)
 m1:scale(m_s, m_s, m_s)
-m1:translate(-5, 0.3, 1)
+m1:translate(-5.4, 0.3, 1)
 
 m2 = gr.sphere('m2')
 scene:add_child(m2)
@@ -215,19 +226,19 @@ m3 = gr.sphere('m3')
 scene:add_child(m3)
 m3:set_material(glass_t)
 m3:scale(m_s, m_s, m_s)
-m3:translate(3.9, 0.3, 1.5)
+m3:translate(3.6, 0.3, 1.9)
 
 m4 = gr.sphere('m4')
 scene:add_child(m4)
 m4:set_material(glass_t)
 m4:scale(m_s, m_s, m_s)
-m4:translate(1.5, 0.3, -3.5)
+m4:translate(1.5, 0.3, -3.2)
 
 
 
 -- Render
 
-full_scene:rotate('y', 2)
+--full_scene:rotate('y', 2)
 full_scene:rotate('x', 10)
 
 --
@@ -235,4 +246,4 @@ full_scene:rotate('x', 10)
 
 white_light = gr.light({-8, 8, 10}, {0.7, 0.7, 0.7}, {1, 0, 0}, 0, 0)
 
-gr.render(full_scene, string.format("final.png"), 1000, 500, {-3, 6, 5.5}, {0, 0, -10}, {0, 1, 0}, 50, {0.3, 0.3, 0.3}, {white_light}, 8, 5, 5, 0, 0, 0, 1, 0)
+gr.render(full_scene, string.format("final.png"), 1000, 500, {-3, 6, 5.5}, {0, 0, -10}, {0, 1, 0}, 50, {0.3, 0.3, 0.3}, {white_light}, 8, 5, 5, 0, 0, 0, 1, 0, 0)
