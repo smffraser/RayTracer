@@ -32,4 +32,4 @@ white_light = gr.light({-10, 10, 15}, {0.9, 0.9, 0.9}, {1, 0, 0}, 0, 0)
 --blocks:rotate('z', 90)
 scene:rotate('x', 20)
 
-gr.render(scene, string.format("primitives.png"), 500, 500, {1.6, 1.4, 10}, {0, 0, -20}, {0, 1, 0}, 50, {0.3, 0.3, 0.3}, {white_light}, 8, 5, 5, 0, 0, 3, 0.01, 0, 1)
+gr.render(scene, string.format("primitives.png"), 500, 500, {1.6, 1.4, 10}, {0, 0, -20}, {0, 1, 0}, 50, {0.3, 0.3, 0.3}, {white_light}, 8, 5, 5, 0, 0, 3, 0.1, 0, 1)

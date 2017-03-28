@@ -88,7 +88,7 @@ require('Assets/music_box')
 scene:add_child(box)
 box:rotate('y', -25)
 box:scale(1.5, 1.5, 1.5)
-box:translate(4.5, 3, -4)
+box:translate(4.5, 3, -3.6)
 
 -- letter blocks
 require('Assets/l_blocks')

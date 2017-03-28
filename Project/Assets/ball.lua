@@ -33,14 +33,16 @@ scene_root:add_child(lblocks)
 lblocks:scale(0.5, 0.5, 0.5)
 lblocks:translate(-2, -1.5, 0)
 
+
+
 scene_root:rotate('x', 20)
 
 
-num_renders = 3
+num_renders = 4
 move = 5
 
 -- Animation
 for i=0,num_renders,1 do
-    white_light = gr.light({-5 + (move * i), 5, 10}, {0.5, 0.5, 0.5}, {1, 0, 0}, 0, 0)
+    white_light = gr.light({-10 + (move * i), 5, 10}, {0.5, 0.5, 0.5}, {1, 0, 0}, 0, 0)
     gr.render(scene_root, string.format('bump_%i.png', i), 500, 500, {0, 0, 7.5}, {0, 0, -1}, {0, 1, 0}, 50, {0.3, 0.3, 0.3}, {white_light}, 4, 5, 5, 0, 0, 0, 0.01, 0, 1)
 end

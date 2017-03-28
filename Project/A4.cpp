@@ -673,7 +673,8 @@ void A4_Render(
 		  "\t" << "up:   " << glm::to_string(up) << std::endl <<
 		  "\t" << "fovy: " << fovy << std::endl <<
           "\t" << "ambient: " << glm::to_string(ambient) << std::endl <<
-		  "\t" << "lights{" << std::endl;
+		  "\t" << "lights{" << std::endl <<
+          "\t" << "highlight? : " << highlight << std::endl;
 
 	for(const Light * light : lights) {
 		std::cout << "\t\t" <<  *light << std::endl;

@@ -56,4 +56,4 @@ scene:rotate('x', 20)
 -- threads, reflec level, refract level, glossy rays, shadow rays
 gr.render(scene, 'texture.png', 500, 500,
 {1.5, 1, 10}, {0, 0, -800}, {0, 1, 0}, 50,
-{0.3, 0.3, 0.3}, {white_light}, 16, 5, 5, 0, 0, 5, 0.0001, 1)
+{0.3, 0.3, 0.3}, {white_light}, 16, 5, 5, 0, 0, 3, 0.1, 0, 1)
