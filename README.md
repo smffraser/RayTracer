@@ -1,52 +1,51 @@
-# CS488 Fall 2015 Project Code
+Ray Tracer is a basic ray tracer used to render a 3D inputted scene into a 2D image. It was created as the final project for CS488 taught by Gladimir V. G. Baranoski at the University of Waterloo. 
 
----
+This project is a (large) extension of my completed A4 assignment for CS488. The only source code given to me were frameworks used for reading in Lua files, creating a hierarchical nodes object, and creating a PNG image from a 2D array of RGB values. The ray tracer and all elements pertaining to pixel colour were done by myself. All source code and assets pertaining to the ray tracer can be found within the "Project" directory. All other "first layer" directories are shared libraries and provided frameworks. 
 
-## Dependencies
-* OpenGL 3.2+
-* GLFW
-    * http://www.glfw.org/
-* Lua
-    * http://www.lua.org/
-* Premake4
-    * https://github.com/premake/premake-4.x/wiki
-    * http://premake.github.io/download.html
-* GLM
-    * http://glm.g-truc.net/0.9.7/index.html
-* ImGui
-    * https://github.com/ocornut/imgui
+- - - -
 
+This ray tracer features basic ray tracer elements such as shading, hierarchical node objects, and bounding boxes. It also includes 8 additional features listed as follows:
 
----
+1. Primitives
+   * Boxes
+   * Spheres
+   * Planes
+   * Cylinders
+   * Cones
+   * Meshes
+2. Texture Mapping
+   * Implemented for Planes, Boxes, and Spheres
+3. Bump Mapping
+   * Implemented for Planes, Boxes, and Spheres
+4. Reflection
+   * With varying reflection ray depth
+5. Refraction
+   * Implemented for Spheres only
+   * With varying refraction ray depth
+   * Combines with reflection using Fresnel Equations
+6. Adaptive Anti-Aliasing
+   * With varying division depth
+7. Soft Shadow
+   * Using non-zero rectangular light sources • With varying shadow ray amounts
+8. Glossy Reflection
+   * With varying glossy reflection ray amounts
+   
+- - - -
 
-## Building Projects
-We use **premake4** as our cross-platform build system. First you will need to build all
-the static libraries that the projects depend on. To build the libraries, open up a
-terminal, and **cd** to the top level of the CS488 project directory and then run the
-following:
+To Build:
 
-    $ premake4 gmake
-    $ make
+   cd \<path to Project directory>
+   premake4 gmake
+   make
 
-This will build the following static libraries, and place them in the top level **lib**
-folder of your cs488 project directory.
-* libcs488-framework.a
-* libglfw3.a
-* libimgui.a
+To Build a Clean Build:
+   
+   make clean
+   make
 
-Next we can build a specific project.  To do this, **cd** into one of the project folders,
-say **A0** for example, and run the following terminal commands in order to compile the A0 executable using all .cpp files in the A0 directory:
+To Run:
 
-    $ cd A0/
-    $ premake4 gmake
-    $ make
+   ./Project Assets/\<lua filename>
+   
 
-
-----
-
-## Windows
-Sorry for all of the hardcore Microsoft fans out there.  We have not had time to test the build system on Windows yet. Currently our build steps work for OSX and Linux, but all the steps should be the same on Windows, except you will need different libraries to link against when building your project executables.  Some good news is that premake4 can output a Visual Studio .sln file by running:
-
-    $ premake4 vs2013
-
- This should point you in the general direction.
+To view renders created by this ray tracer, please visit http://www.toyboxray. wordpress.com
