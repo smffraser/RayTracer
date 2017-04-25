@@ -1,3 +1,5 @@
+# Basic Ray Tracer #
+
 Ray Tracer is a basic ray tracer used to render a 3D inputted scene into a 2D image. It was created as the final project for CS488 taught by Gladimir V. G. Baranoski at the University of Waterloo. 
 
 This project is a (large) extension of my completed A4 assignment for CS488. The only source code given to me were frameworks used for reading in Lua files, creating a hierarchical nodes object, and creating a PNG image from a 2D array of RGB values. The ray tracer and all elements pertaining to pixel colour were done by myself. All source code and assets pertaining to the ray tracer can be found within the "Project" directory. All other "first layer" directories are shared libraries and provided frameworks. 
@@ -32,20 +34,21 @@ This ray tracer features basic ray tracer elements such as shading, hierarchical
    
 - - - -
 
-To Build:
+**To Build:**
+  
+    cd \<path to Project directory>
+    premake4 gmake
+    make
 
-   cd \<path to Project directory>
-   premake4 gmake
-   make
-
-To Build a Clean Build:
+**To Build a Clean Build:**
    
-   make clean
-   make
+    make clean
+    make
 
-To Run:
+**To Run:**
 
-   ./Project Assets/\<lua filename>
+    ./Project Assets/\<lua filename>
    
+- - - -
 
-To view renders created by this ray tracer, please visit http://www.toyboxray. wordpress.com
+To view renders created by this ray tracer, please visit http://www.toyboxray.wordpress.com
