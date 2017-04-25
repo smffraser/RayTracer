@@ -195,7 +195,7 @@ bool NonhierSphere::intersect(const glm::vec3 origin, const glm::vec3 direction,
             // the origin of the sphere to the point of intersection
             // Assume that the poles are alligned with the Y axis (which they should be)
             // Then, u = 0.5 + arctan2(-n.z, d.x)/2*PI
-            // v = 0.5 - arcsin(n.y)/PI
+            // v = arccos(-n.y/radius)/PI
             
             double angle1 = std::atan2(-inter.inter_normal.z, inter.inter_normal.x);
             double angle2 = std::acos(-inter.inter_normal.y/m_radius);
@@ -203,6 +203,7 @@ bool NonhierSphere::intersect(const glm::vec3 origin, const glm::vec3 direction,
             inter.u = 0.5 + (angle1 / (2.0 * M_PI));
             inter.v = (angle2/M_PI);
             
+            // To get the up and vp vectors we take u and v and find the derivatives of the tangents to those points
             inter.x = glm::vec3(-m_radius*sin(angle1)*sin(angle2), 0, -m_radius*cos(angle1)*sin(angle2));
             inter.y = glm::vec3(m_radius*cos(angle1)*cos(angle2), m_radius*sin(angle2), -m_radius*sin(angle1)*cos(angle2));
             return true;
@@ -727,7 +728,7 @@ bool NonhierBox::intersect(const glm::vec3 origin, const glm::vec3 direction, In
         }
     }
     
-    if (isnan(tmin)){
+    if (std::isnan(tmin)){
         return false;
     }
     
@@ -753,7 +754,7 @@ bool NonhierBox::intersect(const glm::vec3 origin, const glm::vec3 direction, In
         index_2 = 1;
     }
     
-    if (isnan(inter.inter_point[0]) || isnan(inter.inter_point[1])){
+    if (std::isnan(inter.inter_point[0]) || std::isnan(inter.inter_point[1])){
         //std::cout << "origin: " << glm::to_string(origin) << std::endl;
         //std::cout << "tmin: " << tmin << std::endl;
         //std::cout << "direction: " << glm::to_string(direction) <<std::endl;

@@ -17,13 +17,46 @@ b_l = 20
 b_w = 15
 b_h = 5
 
--- Wall
+-- Wallpaper Back
 wall = gr.plane('wall')
 full_scene:add_child(wall)
 wall:set_material(wallpaper)
 wall:set_texture('Assets/wallpaper.png')
 wall:scale(b_w*2, b_l+2, b_l+2)
 wall:translate(2.5,0,-b_l/2-1)
+
+-- Wallpaper Front
+fbwall = gr.plane('wall')
+full_scene:add_child(fbwall)
+fbwall:set_material(wallpaper)
+fbwall:set_texture('Assets/wallpaper.png')
+fbwall:scale(b_w*2, b_l+2, b_l+2)
+fbwall:translate(2.5,0,b_l/2+1)
+
+-- Wallpaper Left
+lbwall = gr.plane('lbwall')
+full_scene:add_child(lbwall)
+lbwall:set_material(wallpaper)
+lbwall:rotate('y', 90)
+lbwall:scale(1, b_l+2, b_l+10)
+lbwall:translate(-b_w/2-5-3, b_h/2, 0)
+
+-- Wallpaper Right
+rbwall = gr.plane('rbwall')
+full_scene:add_child(rbwall)
+rbwall:set_material(wallpaper)
+rbwall:rotate('y', -90)
+rbwall:scale(1, b_l+2, b_l+10)
+rbwall:translate(b_w/2+5, b_h/2, 0)
+
+-- Wallpaper Ceiling
+cbwall = gr.plane('cbwall')
+full_scene:add_child(cbwall)
+cbwall:set_material(wallpaper)
+cbwall:rotate('x', 90)
+cbwall:scale(b_l+10, 1, b_l+2)
+cbwall:translate(0, b_l/2+2, 0)
+
 
 -- floor plane
 floor = gr.plane('floor')
@@ -207,8 +240,8 @@ jack3:translate(0, 0.34, -1)
 
 m_s = 0.3
 
-glass_t = gr.material({0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, 100000, 1.52)
---glass_t = gr.material({1.0, 0.0, 1.0}, {0.25, 0.25, 0.25}, 100000, 0)
+glass_t = gr.material({0.0, 0.0, 0.0}, {0.9, 0.9, 0.9}, 100000, 1.52)
+glass_n = gr.material({0.0, 0.0, 0.0}, {0.9, 0.9, 0.9}, 100000, 0)
 
 m1 = gr.sphere('m1')
 scene:add_child(m1)
@@ -218,7 +251,7 @@ m1:translate(-5.4, 0.3, 1)
 
 m2 = gr.sphere('m2')
 scene:add_child(m2)
-m2:set_material(glass_t)
+m2:set_material(glass_n)
 m2:scale(m_s, m_s, m_s)
 m2:translate(-2.5, 0.3, 3)
 
@@ -238,12 +271,15 @@ m4:translate(1.5, 0.3, -3.2)
 
 -- Render
 
---full_scene:rotate('y', 2)
+full_scene:rotate('y', 2)
 full_scene:rotate('x', 10)
 
 --
 
 
-white_light = gr.light({-8, 8, 10}, {0.7, 0.7, 0.7}, {1, 0, 0}, 0, 0)
+--white_light = gr.light({-8, 8, 10}, {0.7, 0.7, 0.7}, {1, 0, 0}, 1, 1)
+white_light = gr.light({-9, 7, 10}, {0.7, 0.7, 0.7}, {1, 0, 0}, 2, 2)
 
-gr.render(full_scene, string.format("final.png"), 1000, 500, {-3, 6, 5.5}, {0, 0, -10}, {0, 1, 0}, 50, {0.3, 0.3, 0.3}, {white_light}, 8, 5, 5, 0, 0, 0, 1, 0, 0)
+--{-3, 6, 5.5}
+
+gr.render(full_scene, string.format("final.png"), 1000, 500, {-3, 6, 5.5}, {0, 0, -10}, {0, 1, 0}, 50, {0.3, 0.3, 0.3}, {white_light}, 24, 5, 5, 0, 64, 3, 0.1, 0, 1)

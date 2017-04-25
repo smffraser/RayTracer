@@ -1,7 +1,7 @@
 -- instance.lua
 -- Thomas Pflaum 1996
 
-stone = gr.material({0.0, 0.0, 0.0}, {0, 0, 0}, 100000, 1.999)
+stone = gr.material({0.0, 0.0, 0.0}, {0.9, 0.9, 0.9}, 100000, 1.52)
 grass = gr.material({0.86, 0.82, 0.71}, {0.0, 0.0, 0.0}, 0, 0)
 blue = gr.material({0.68, 0.91, 0.99}, {0.0, 0.0, 0.0}, 0, 0)
 
@@ -30,7 +30,7 @@ plane2:translate(0, 7.5, -5)
 plane3 = gr.plane('wallr')
 scene:add_child(plane3)
 plane3:set_material(blue)
-plane3:rotate('y', -90)
+plane3:rotate('y', 90)
 plane3:scale(30, 15, 20)
 plane3:translate(10, 7.5, 5)
 
@@ -44,7 +44,7 @@ plane4:translate(-10, 7.5, 5)
 plane5 = gr.plane('wallf')
 scene:add_child(plane5)
 plane5:set_material(blue)
-plane5:rotate('y', 180)
+plane5:rotate('y', -180)
 plane5:scale(20, 15, 10)
 plane5:translate(0, 7.5, 15)
 
@@ -64,7 +64,7 @@ sphere:translate(2, 2.0, 1.5)
 
 -- cube
 cube = gr.cylinder('cube')
-scene:add_child(cube)
+--scene:add_child(cube)
 cube:set_material(stone)
 cube:rotate('x', 90)
 cube:scale(2, 2, 2)
@@ -83,6 +83,6 @@ white_light = gr.light({9, 14, 12}, {0.7, 0.7, 0.7}, {1, 0, 0}, 0, 0)
 gr.render(scene,
 'refract.png', 512, 512,
 {0, 4.5, 12}, {0, 0, -31}, {0, 1, 0}, 50,
-{0.4, 0.4, 0.4}, {white_light}, 8, 5, 5, 0, 0, 0, 0.1, 0, 1)
+{0.4, 0.4, 0.4}, {white_light}, 4, 5, 5, 0, 0, 0, 0.1, 0, 1)
 
 
