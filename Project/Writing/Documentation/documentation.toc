@@ -1,0 +1,82 @@
+\ttl@change@i {\@ne }{section}{0pt}{}{\contentsmargin {0pt} \thecontentslabel \enspace }{\contentsmargin {0pt}}{\titlerule *[.5pc]{.}\contentspage }\relax 
+\ttl@change@v {section}{}{}{}\relax 
+\contentsline {section}{\numberline {1.0 }Purpose}{1}
+\contentsline {section}{\numberline {2.0 }Overview}{1}
+\contentsline {section}{\numberline {3.0 }Manual}{3}
+\contentsline {subsection}{\numberline {3.1}README}{3}
+\contentsline {subsection}{\numberline {3.2}Program Communication}{4}
+\contentsline {subsubsection}{\numberline {3.2.1}Input}{4}
+\contentsline {subsubsection}{\numberline {3.2.2}Interactions}{4}
+\contentsline {subsubsection}{\numberline {3.2.3}Output}{5}
+\contentsline {subsection}{\numberline {3.3}LUA File Format}{5}
+\contentsline {subsubsection}{\numberline {3.3.1}LUA Objects}{5}
+\contentsline {subsubsection}{\numberline {3.3.2}LUA Object Modifiers}{7}
+\contentsline {subsubsection}{\numberline {3.3.3}LUA Commands}{8}
+\contentsline {subsection}{\numberline {3.4}Project Organization}{10}
+\contentsline {subsubsection}{\numberline {3.4.1}Source Code}{10}
+\contentsline {subsubsection}{\numberline {3.4.2}Assets}{12}
+\contentsline {section}{\numberline {4.0 }Technical Outline}{13}
+\contentsline {subsection}{\numberline {4.1}Objective 1: Primitives}{13}
+\contentsline {subsubsection}{\numberline {4.1.1}Cylinder Implementation}{13}
+\contentsline {subsubsection}{\numberline {4.1.2}Cone Implementation}{16}
+\contentsline {subsubsection}{\numberline {4.1.3}Plane Implementation}{18}
+\contentsline {subsubsection}{\numberline {4.1.4}Implementation Location in Source}{19}
+\contentsline {subsubsection}{\numberline {4.1.5}Render Examples and Demos}{20}
+\contentsline {subsubsection}{\numberline {4.1.6}Challenges and Bugs}{20}
+\contentsline {subsubsection}{\numberline {4.1.7}Future Additions \& Unexplored Areas}{20}
+\contentsline {subsection}{\numberline {4.2}Objective 2: Animation}{21}
+\contentsline {subsubsection}{\numberline {4.2.1}Implementation}{21}
+\contentsline {subsubsection}{\numberline {4.2.2}Render Examples and Demos}{21}
+\contentsline {subsubsection}{\numberline {4.2.3}Challenges and Bugs}{22}
+\contentsline {subsubsection}{\numberline {4.2.4}Future Additions \& Unexplored Areas}{22}
+\contentsline {subsection}{\numberline {4.3}Objective 3: Adaptive Anti-Aliasing}{22}
+\contentsline {subsubsection}{\numberline {4.3.1}Implementation}{23}
+\contentsline {subsubsection}{\numberline {4.3.2}Implementation Location in Source}{25}
+\contentsline {subsubsection}{\numberline {4.3.3}Render Examples and Demos}{25}
+\contentsline {subsubsection}{\numberline {4.3.4}Challenges and Bugs}{25}
+\contentsline {subsubsection}{\numberline {4.3.5}Future Additions \& Unexplored Areas}{26}
+\contentsline {subsection}{\numberline {4.4}Objective 4: Reflection}{26}
+\contentsline {subsubsection}{\numberline {4.4.1}Implementation}{26}
+\contentsline {subsubsection}{\numberline {4.4.2}Implementation Location in Source}{28}
+\contentsline {subsubsection}{\numberline {4.4.3}Render Examples and Demos}{28}
+\contentsline {subsubsection}{\numberline {4.4.4}Challenges and Bugs}{29}
+\contentsline {subsection}{\numberline {4.5}Objective 5: Glossy Reflection}{29}
+\contentsline {subsubsection}{\numberline {4.5.1}Implementation}{29}
+\contentsline {subsubsection}{\numberline {4.5.2}Implementation Location in Source}{31}
+\contentsline {subsubsection}{\numberline {4.5.3}Render Examples and Demos}{31}
+\contentsline {subsubsection}{\numberline {4.5.4}Challenges and Bugs}{32}
+\contentsline {subsubsection}{\numberline {4.5.5}Future Additions \& Unexplored Areas}{32}
+\contentsline {subsection}{\numberline {4.6}Objective 6: Refraction}{32}
+\contentsline {subsubsection}{\numberline {4.6.1}Implementation}{33}
+\contentsline {subsubsection}{\numberline {4.6.2}Implementation Location in Source}{35}
+\contentsline {subsubsection}{\numberline {4.6.3}Render Examples and Demos}{35}
+\contentsline {subsubsection}{\numberline {4.6.4}Challenges and Bugs}{35}
+\contentsline {subsubsection}{\numberline {4.6.5}Future Additions \& Unexplored Areas}{36}
+\contentsline {subsection}{\numberline {4.7}Objective 7: Soft Shadow}{36}
+\contentsline {subsubsection}{\numberline {4.7.1}Implementation}{36}
+\contentsline {subsubsection}{\numberline {4.7.2}Implementation Location in Source}{38}
+\contentsline {subsubsection}{\numberline {4.7.3}Render Examples and Demos}{38}
+\contentsline {subsubsection}{\numberline {4.7.4}Challenges and Bugs}{38}
+\contentsline {subsubsection}{\numberline {4.7.5}Future Additions \& Unexplored Areas}{38}
+\contentsline {subsection}{\numberline {4.8}Objective 8: Texture Mapping}{39}
+\contentsline {subsubsection}{\numberline {4.8.1}Implementation}{39}
+\contentsline {paragraph}{\numberline {4.8.1.1}UV-Mapping of Planes}{41}
+\contentsline {paragraph}{\numberline {4.8.1.2}UV-Mapping of Cubes}{41}
+\contentsline {paragraph}{\numberline {4.8.1.3}UV-Mapping of Spheres}{42}
+\contentsline {subsubsection}{\numberline {4.8.2}Implementation Location in Source}{43}
+\contentsline {subsubsection}{\numberline {4.8.3}Render Examples and Demos}{43}
+\contentsline {subsubsection}{\numberline {4.8.4}Challenges and Bugs}{43}
+\contentsline {subsubsection}{\numberline {4.8.5}Future Additions \& Unexplored Areas}{43}
+\contentsline {subsection}{\numberline {4.9}Objective 9: Bump Mapping}{44}
+\contentsline {subsubsection}{\numberline {4.9.1}Implementation}{44}
+\contentsline {paragraph}{\numberline {4.9.1.1}$\mathaccent "017E\relax {O_u}$ and $\mathaccent "017E\relax {O_v}$ Implementation for Plane}{46}
+\contentsline {paragraph}{\numberline {4.9.1.2}$\mathaccent "017E\relax {O_u}$ and $\mathaccent "017E\relax {O_v}$ Implementation for Box/Cube}{46}
+\contentsline {paragraph}{\numberline {4.9.1.3}$\mathaccent "017E\relax {O_u}$ and $\mathaccent "017E\relax {O_v}$ Implementation for Sphere}{47}
+\contentsline {subsubsection}{\numberline {4.9.2}Implementation Location in Source}{47}
+\contentsline {subsubsection}{\numberline {4.9.3}Render Examples and Demos}{47}
+\contentsline {subsubsection}{\numberline {4.9.4}Challenges and Bugs}{48}
+\contentsline {subsubsection}{\numberline {4.9.5}Future Additions \& Unexplored Areas}{48}
+\contentsline {subsection}{\numberline {4.10}Objective 10: Final Scene}{49}
+\contentsline {section}{\numberline {5.0 }Acknowledgements}{50}
+\contentsline {section}{\numberline {6.0 }References}{51}
+\contentsfinish 

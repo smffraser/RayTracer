@@ -1,0 +1,85 @@
+\begin{thebibliography}{}
+
+\bibitem[Baranoski, 2017a]{lectures_general}
+Baranoski, G. V.~G. (2017a).
+\newblock Introduction to computer graphics.
+\newblock University Lecture.
+
+\bibitem[Baranoski, 2017b]{lectures_bump}
+Baranoski, G. V.~G. (2017b).
+\newblock Introduction to computer graphics: Bump mapping.
+\newblock University Lecture.
+
+\bibitem[Baranoski, 2017c]{lectures_refl}
+Baranoski, G. V.~G. (2017c).
+\newblock Introduction to computer graphics: Reflection and refraction.
+\newblock University Lecture.
+
+\bibitem[Baranoski, 2017d]{lectures_text}
+Baranoski, G. V.~G. (2017d).
+\newblock Introduction to computer graphics: Texture mapping.
+\newblock University Lecture.
+
+\bibitem[Blinn, 1978]{blinn}
+Blinn, J.~F. (1978).
+\newblock Simulation of wrinkled surfaces.
+\newblock {\em ACM SIGGRAPH Computer Graphics}, 12(3):286--292.
+
+\bibitem[Blinn and Newell, 1976]{blinn_newell}
+Blinn, J.~F. and Newell, M.~E. (1976).
+\newblock Texture and reflection in computer generated images.
+\newblock {\em Communications of the ACM}, 19(10):542--547.
+
+\bibitem[de~Greve, 2006]{de_greve}
+de~Greve, B. (2006).
+\newblock Reflections and refractions in ray tracing.
+
+\bibitem[Drakos, 1997]{prim_web}
+Drakos, N. (1997).
+\newblock Ray tracing primitives.
+\newblock
+  \url{https://www.cl.cam.ac.uk/teaching/1999/AGraphHCI/SMAG/node2.html}.
+
+\bibitem[Glassner, 1989]{glassner}
+Glassner, A.~S. (1989).
+\newblock {\em An Introduction to Ray Tracing}.
+\newblock Elsevier.
+
+\bibitem[Hecht, 2002]{hecht}
+Hecht, E. (2002).
+\newblock {\em Optics}.
+\newblock Pearson Education, Inc, 4th edition.
+
+\bibitem[Hughes and Moller, 1999]{hughes}
+Hughes, J.~F. and Moller, T. (1999).
+\newblock Building an orthonormal basis from a unit vector.
+\newblock {\em Journal of Graphics Tools}, 4(4):33--35.
+
+\bibitem[Mitchell, 1990]{mitchell}
+Mitchell, D.~P. (1990).
+\newblock The antialiasing problem in ray tracing.
+\newblock {\em SIGGRAPH 1990 Course Notes}.
+
+\bibitem[Roth, 1982]{roth}
+Roth, S.~D. (1982).
+\newblock Ray casting for modeling solids.
+\newblock {\em Computer Graphics and Image Processing}, 18(2):109 -- 144.
+
+\bibitem[Shirley et~al., 2005]{shirley}
+Shirley, P., Ashikhmin, M., and Marschner, S. (2005).
+\newblock {\em Fundamentals of Computer Graphics}.
+\newblock A. K. Peters, Ltd., Natick, MA, USA, 2nd edition.
+
+\bibitem[Watt, 1992]{watt}
+Watt, A.~H. (1992).
+\newblock {\em Advanced Animation and Rendering Techniques: Theory and
+  Practise}.
+\newblock ACM Press.
+
+\bibitem[Wikipedia, 2017]{sphere_web}
+Wikipedia (2017).
+\newblock Uv mapping.
+\newblock
+  \url{https://en.wikipedia.org/w/index.php?title=UV\_mapping\&oldid=771082244}.
+
+\end{thebibliography}
